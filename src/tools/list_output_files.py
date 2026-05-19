@@ -3,7 +3,8 @@ tools/list_output_files.py
 ==========================
 Tool 7 — list_output_files
 
-Lists all generated .docx files in the output folder with metadata.
+Lists all generated .docx files in the output folder with metadata
+and full download links.
 
 Annotation:
   readOnlyHint   = True   (reads directory only — no writes)
@@ -13,7 +14,7 @@ Annotation:
 import json
 from datetime import datetime
 from mcp.types import Tool, TextContent
-from constants import OUTPUT_DIR
+from constants import OUTPUT_DIR, BASE_URL
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
@@ -22,8 +23,8 @@ TOOL_DEFINITION = Tool(
         "[Optional — user request மட்டும்] "
         "பயனர் 'என்ன files?', 'கோப்புகளை காட்டு', 'list files' என்று கேட்டால் மட்டும் call செய். "
         "output/ folder-இல் உள்ள எல்லா .docx files-ஐயும் காட்டும். "
-        "Return: filename, path, size_kb, created. "
-        "பயனருக்கு: 📁 உருவாக்கப்பட்ட பத்திரங்கள் ([count]): 1.[name] — [size]KB — [date]"
+        "Return: filename, size_kb, created, download_url (full https link). "
+        "பயனருக்கு: 📁 உருவாக்கப்பட்ட பத்திரங்கள் ([count]): 1.[name] — [size]KB — [date] — [download_url]"
     ),
     inputSchema={
         "type": "object",
@@ -44,11 +45,12 @@ async def handle(arguments: dict) -> list[TextContent]:
     file_list = []
     for f in files:
         stat = f.stat()
+        download_url = f"{BASE_URL.rstrip('/')}/download/{f.name}"
         file_list.append({
-            "filename": f.name,
-            "path":     str(f),
-            "size_kb":  round(stat.st_size / 1024, 1),
-            "created":  datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            "filename":     f.name,
+            "size_kb":      round(stat.st_size / 1024, 1),
+            "created":      datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+            "download_url": download_url,
         })
 
     return [TextContent(
@@ -57,6 +59,6 @@ async def handle(arguments: dict) -> list[TextContent]:
             "files":       file_list,
             "total_files": len(file_list),
             "output_dir":  str(OUTPUT_DIR),
-            "message":     f"📁 {len(file_list)} பத்திரங்கள் கண்டுபிடிக்கப்பட்டன."
+            "message":     f"📁 {len(file_list)} பத்திரங்கள் கண்டுபிடிக்கப்பட்டன.",
         }, ensure_ascii=False, indent=2)
     )]

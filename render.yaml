@@ -29,6 +29,9 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
-      # Output directory inside the container (ephemeral on free tier)
+      # Output directory — /tmp is writable on Render free tier (ephemeral)
       - key: OUTPUT_DIR
         value: /tmp/tamil-deed-output
+      # Base URL for download links returned by list_output_files tool
+      - key: RENDER_EXTERNAL_URL
+        value: https://tamil-deed-writer.onrender.com

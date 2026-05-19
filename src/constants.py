@@ -20,10 +20,13 @@ from pathlib import Path
 BASE_DIR      = Path(__file__).parent.parent          # tamil-deed-mcp/
 TEMPLATES_DIR = BASE_DIR / "templates"
 
-# OUTPUT_DIR: use env var on Render (ephemeral /tmp), fall back to local output/
+# OUTPUT_DIR: /tmp/tamil-deed-output on Render (ephemeral), local output/ for dev
 _output_env = os.environ.get("OUTPUT_DIR", "")
-OUTPUT_DIR  = Path(_output_env) if _output_env else BASE_DIR / "output"
+OUTPUT_DIR  = Path(_output_env) if _output_env else Path("/tmp/tamil-deed-output")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Base URL for download links (set RENDER_EXTERNAL_URL env var on Render dashboard)
+BASE_URL = os.environ.get("RENDER_EXTERNAL_URL", "https://tamil-deed-writer.onrender.com")
 
 # ── PAN / TDS thresholds (Income Tax Act) ─────────────────────────────────────
 PAN_THRESHOLD = 1_000_000    # ₹10 lakh  — Rule 114B
