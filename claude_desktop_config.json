@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tamil-deed-writer": {
+      "command": "python3",
+      "args": ["/FULL/PATH/TO/tamil-deed-mcp/run_stdio.py"]
+    }
+  }
+}

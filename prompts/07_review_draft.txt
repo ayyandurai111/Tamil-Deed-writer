@@ -1,0 +1,49 @@
+TOOL: review_draft
+STEP: 7 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  draft_text      = Step 6 generate_draft result
+  filled_skeleton = Step 5 result
+  deed_type       = Step 1 result
+
+4 Layers என்ன செய்யும்:
+  L1 Placeholders — {{TAG}} unfilled regex check
+  L2 Legal        — Aadhaar 12 digits, PAN format, Date valid, 4 boundaries
+  L3 Consistency  — District match, Age ≥ 18, Amount vs words
+  L4 Tamil Grammar — Claude AI grammar + legal terms check
+
+Return பார்:
+  ready_for_docx   = True / False
+  critical_count   — DOCX block செய்யும் errors
+  warning_count    — DOCX allow ஆனாலும் காட்ட வேண்டும்
+  summary          — Tamil summary message
+  layers           — per-layer details
+
+CASE A — ready_for_docx = True, warning_count = 0:
+  "✅ சரிபார்ப்பு முடிந்தது — பத்திரம் தயாரிக்கிறேன்!"
+  → generate_docx செல்.
+
+CASE B — ready_for_docx = True, warning_count > 0:
+  எச்சரிக்கைகளை காட்டு:
+  "⚠️ சிறு குறிப்புகள்:
+   1. [warning 1]
+   2. [warning 2]
+  பத்திரம் தயாரிக்கிறேன்."
+  → generate_docx செல்.
+
+CASE C — ready_for_docx = False:
+  Critical errors-ஐ காட்டு:
+  "❌ சரிபார்ப்பில் திருத்தங்கள் தேவை:
+
+  🔴 Critical:
+  1. [error 1 issue]
+  2. [error 2 issue]
+
+  ⚠️ Warnings:
+  1. [warning issue]
+
+  திருத்தங்களை கொடுத்தால் மீண்டும் சரிபார்க்கிறேன்."
+
+  பிறகு: fill_skeleton → generate_draft → review_draft LOOP.
+  ❌ generate_docx call செய்யாதே.

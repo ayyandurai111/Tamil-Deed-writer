@@ -1,0 +1,19 @@
+TOOL: generate_draft
+STEP: 6 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  filled_skeleton = Step 5 result
+
+Return பார்:
+  draft_text    — Tamil plain-text முழு பத்திரம்
+  draft_id      — unique ID (review-க்கு தேவை)
+  unfilled_count — draft-இல் உள்ள {{TAG}} count
+  sections      — பகுதி வாரியான text dict
+
+பயனருக்கு சொல்:
+  "Draft தயாரானது ✅ — இப்போது 4 அடுக்கு சரிபார்ப்பு செய்கிறேன்..."
+  "1️⃣ Placeholders  2️⃣ Legal  3️⃣ Consistency  4️⃣ Tamil Grammar"
+
+Next step:
+  draft_text + filled_skeleton + deed_type → review_draft.

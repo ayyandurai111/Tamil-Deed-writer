@@ -1,0 +1,34 @@
+# render.yaml
+# ===========
+# Render.com deployment configuration for Tamil Sale Deed MCP Server.
+#
+# Deploy steps:
+#   1. Push this repo to GitHub
+#   2. Go to https://dashboard.render.com → New → Web Service
+#   3. Connect your GitHub repo
+#   4. Render auto-detects this file and configures the service
+
+services:
+  - type: web
+    name: tamil-deed-mcp
+    runtime: python
+    region: singapore   # closest to Chennai; change to 'oregon' if preferred
+
+    # Build
+    buildCommand: pip install -r requirements.txt
+
+    # Start — $PORT is injected by Render automatically
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    # Free tier (change to 'starter' for always-on)
+    plan: free
+
+    # Health check — Render pings this to confirm the service is alive
+    healthCheckPath: /
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      # Output directory inside the container (ephemeral on free tier)
+      - key: OUTPUT_DIR
+        value: /tmp/tamil-deed-output

@@ -1,0 +1,164 @@
+{
+  "type": "agriculture",
+  "title": "சுத்த விக்கிரயப் பத்திரம்",
+  "subtitle": "ABSOLUTE SALE DEED — AGRICULTURE LAND",
+  "act_ref": "(பதிவுச் சட்டம் 1908, பிரிவு 17 மற்றும் சொத்து மாற்றுச் சட்டம் 1882 இன் படி பதிவு செய்யப்படுவது)",
+  "stamp_note": "[ ரூபாய் {{STAMP_VALUE}} மதிப்புள்ள இ-ஸ்டாம்ப் பேப்பரில் எழுதப்படுவது ]",
+
+  "header": {
+    "date_day":          "{{DATE_DAY}}",
+    "date_month":        "{{DATE_MONTH}}",
+    "date_year":         "{{DATE_YEAR}}",
+    "date_words":        "{{DATE_WORDS}}",
+    "registration_office": "{{REG_OFFICE}}",
+    "district":          "{{DISTRICT}}",
+    "taluk":             "{{TALUK}}"
+  },
+
+  "section_1_label": "பகுதி 1 — தரப்பினர் விவரம்",
+
+  "vendor": {
+    "label":       "விற்பனையாளர் (VENDOR / SELLER)",
+    "prefix":      "{{VENDOR_PREFIX}}",
+    "name":        "{{VENDOR_NAME}}",
+    "relation":    "{{VENDOR_RELATION}}",
+    "father_name": "{{VENDOR_FATHER}}",
+    "age":         "{{VENDOR_AGE}}",
+    "caste":       "{{VENDOR_CASTE}}",
+    "occupation":  "{{VENDOR_OCCUPATION}}",
+    "address":     "{{VENDOR_ADDRESS}}",
+    "village":     "{{VENDOR_VILLAGE}}",
+    "vattam":      "{{VENDOR_VATTAM}}",
+    "district":    "{{VENDOR_DISTRICT}}",
+    "aadhaar":     "{{VENDOR_AADHAAR}}",
+    "pan":         "{{VENDOR_PAN}}",
+    "phone":       "{{VENDOR_PHONE}}"
+  },
+
+  "purchaser": {
+    "label":       "கொள்முதலாளர் (PURCHASER / BUYER)",
+    "prefix":      "{{PURCHASER_PREFIX}}",
+    "name":        "{{PURCHASER_NAME}}",
+    "relation":    "{{PURCHASER_RELATION}}",
+    "father_name": "{{PURCHASER_FATHER}}",
+    "age":         "{{PURCHASER_AGE}}",
+    "caste":       "{{PURCHASER_CASTE}}",
+    "occupation":  "{{PURCHASER_OCCUPATION}}",
+    "address":     "{{PURCHASER_ADDRESS}}",
+    "village":     "{{PURCHASER_VILLAGE}}",
+    "vattam":      "{{PURCHASER_VATTAM}}",
+    "district":    "{{PURCHASER_DISTRICT}}",
+    "aadhaar":     "{{PURCHASER_AADHAAR}}",
+    "pan":         "{{PURCHASER_PAN}}",
+    "phone":       "{{PURCHASER_PHONE}}"
+  },
+
+  "section_2_label": "பகுதி 2 — சொத்து விவரம் (SCHEDULE OF PROPERTY)",
+
+  "property": {
+    "district":       "{{PROP_DISTRICT}}",
+    "taluk":          "{{PROP_TALUK}}",
+    "village":        "{{PROP_VILLAGE}}",
+    "revenue_village":"{{REVENUE_VILLAGE}}",
+    "vattam":         "{{PROP_VATTAM}}",
+    "survey_no":      "{{SURVEY_NO}}",
+    "subdivision":    "{{SUBDIVISION}}",
+    "patta_no":       "{{PATTA_NO}}",
+    "chitta_no":      "{{CHITTA_NO}}",
+    "land_type":      "{{LAND_TYPE}}",
+    "land_nature":    "{{NANJAI_OR_PUNJAI}}",
+    "water_source":   "{{WATER_SOURCE}}",
+    "a_register_no":  "{{A_REGISTER_NO}}",
+    "extent_acre":    "{{EXTENT_ACRE}}",
+    "extent_cent":    "{{EXTENT_CENT}}",
+    "boundary_east":  "{{BOUNDARY_EAST}}",
+    "boundary_west":  "{{BOUNDARY_WEST}}",
+    "boundary_north": "{{BOUNDARY_NORTH}}",
+    "boundary_south": "{{BOUNDARY_SOUTH}}",
+    "buildings":      "{{BUILDINGS}}",
+    "trees":          "{{TREES}}",
+    "water_structures":"{{WATER_STRUCTURES}}"
+  },
+
+  "section_3_label": "பகுதி 3 — விற்பனை இணக்கம் (SALE CONSIDERATION)",
+
+  "consideration": {
+    "total_amount":    "{{TOTAL_AMOUNT}}",
+    "amount_in_words": "{{AMOUNT_WORDS}}",
+    "advance_date":    "{{ADVANCE_DATE}}",
+    "advance_amount":  "{{ADVANCE_AMOUNT}}",
+    "balance_amount":  "{{BALANCE_AMOUNT}}",
+    "balance_date":    "{{BALANCE_DATE}}",
+    "payment_mode":    "{{PAYMENT_MODE}}",
+    "transaction_no":  "{{TRANSACTION_NO}}",
+    "transaction_date":"{{TRANSACTION_DATE}}",
+    "bank_name":       "{{BANK_NAME}}"
+  },
+
+  "section_4_label": "பகுதி 4 — விற்பனையாளர் உரிமை அறிவிப்பு",
+  "section_4_text": "நான் மேற்கண்ட சொத்து விவரத்தில் குறிப்பிட்ட விவசாய நிலத்தை, {{PRIOR_DEED_DATE}} தேதியிட்ட, {{PRIOR_REG_OFFICE}} சார்பதிவகர் அலுவலகத்தில் பதிவு செய்யப்பட்ட ஆவண எண். {{PRIOR_DOC_NO}}/{{PRIOR_YEAR}} மூலம் கிரையம் பெற்றேன். அதுமுதல் இந்த நிலத்தை எனது சொந்த வருவாய் மற்றும் சேமிப்பினால் மட்டுமே வைத்திருந்து, நேரடியாக விவசாயம் செய்து, அரசு வரிகளையும் நீர்வரியையும் தவறாமல் செலுத்தி, எந்தவிதமான வில்லங்கமும் ஏற்படுத்தாமல் சுவாதீனத்தில் ஆண்டு வருகிறேன்.",
+
+  "section_5_label": "பகுதி 5 — முந்தைய உரிமைத் தொடர் (CHAIN OF TITLE)",
+  "chain_of_title": [
+    { "label": "1வது உரிமையாளர்", "owner": "{{OWNER_1}}", "doc_no": "{{DOC_NO_1}}" },
+    { "label": "2வது உரிமையாளர்", "owner": "{{OWNER_2}}", "doc_no": "{{DOC_NO_2}}" },
+    { "label": "3வது உரிமையாளர்", "owner": "{{OWNER_3}}", "doc_no": "{{DOC_NO_3}}" },
+    { "label": "தற்போதைய விற்பனையாளர்", "owner": "{{VENDOR_NAME}}", "doc_no": "{{PRIOR_DOC_NO}}" }
+  ],
+
+  "section_6_label": "பகுதி 6 — சட்டரீதியான அறிவிப்புகள் (LEGAL DECLARATIONS)",
+  "legal_clauses": {
+    "land_reforms": "விற்பனையாளர் மற்றும் கொள்முதலாளர் இருவரும் இதன் மூலம் உறுதிபடக் கூறுகின்றோம் : இந்த விற்பனை தமிழ்நாடு நில சீர்திருத்தச் சட்டம் 1961 (Tamil Nadu Land Reforms (Fixation of Ceiling on Land) Act, 1961 — Act 58 of 1961) — இன் கீழான 15 நிலையான ஏக்கர் (Standard Acres) உச்ச வரம்பை மீறாத விதத்தில் நடைபெறுகிறது. இந்த கிரையத்திற்கு முன்பும் பின்பும், விற்பனையாளரும் கொள்முதலாளரும் தலா தனிப்பட்ட முறையில் அல்லது குடும்பமாக 15 நிலையான ஏக்கருக்கு மேல் விவசாய நிலம் வைத்திருக்கவில்லை / வைத்திருக்கப் போவதில்லை. இந்த விவசாய நிலம் அரசாங்கத்தால் அளிக்கப்பட்ட (Assigned Land), பட்டா இல்லாத நிலம் (Poramboke), காடு நிலம் (Forest Land), கோவில் நிலம் (Inam / Devasthanam Land), அல்லது இதர தடைப்பட்ட நிலம் எதுவும் அல்ல. காவேரி டெல்டா பாசன நிலமாக (Cauvery Delta Protected Agricultural Zone) இந்த நிலம் இல்லை என்று உறுதி கூறுகிறோம். இந்த அறிவிப்பில் பொய்யோ, தவறான தகவலோ காணப்படுமாயின், அதற்கான சட்டரீதியான பொறுப்பு முழுவதும் விற்பனையாளரையே சாரும்.",
+    "encumbrance": "மேற்கண்ட விவசாய நிலத்தின் மீது அடமானம் (Mortgage), குத்தகை (Lease), குத்தகை உரிமை, நீர் உரிமை தகராறு, அதிக உரிமையாளர் தகராறு, கோர்ட்டு அட்டாச்மென்ட் (Court Attachment), சார்க்கார் வரிபாக்கி, கிஸ்த் பாக்கி, நிலஆர்ஜிதம் (Land Acquisition), மைனர் வழக்கு, சமபங்கு (Partition) தகராறு, உயில் (Will) தகராறு, வாரிசு தகராறு, DRO / RDO புகார், செக்யூரிட்டி தொகை, கொலட்டிரல் — எதுவும் கிடையாது என்று விற்பனையாளர் இதன் மூலம் உறுதிபடக் கூறுகிறார். அப்படி பின்னிட்டு ஏதேனும் வில்லங்கம் கண்டுபிடிக்கப்பட்டால், அதை விற்பனையாளர் தனது சொந்தச் செலவிலும் பொறுப்பிலும் தீர்த்துக்கொடுக்க வேண்டும்.",
+    "tax": "இந்த விவசாய நிலத்திற்கான நில வரி (Land Revenue / Kist), நீர்வரி (Water Cess / Irrigation Cess), மற்றும் இதர அரசு வகையறாக்கள் அனைத்தையும் இன்றைய தேதி வரை பாக்கியின்றி செலுத்திவிட்டேன். ஏதேனும் நிலுவை ஏற்பட்டால் அதை விற்பனையாளர் தனது சொந்தச் செலவில் செலுத்திவிடுவர்.",
+    "urban_ceiling": "இந்த சொத்தின் மீது தமிழ்நாடு நகர்ப்புற நில (உச்சவரம்பு மற்றும் ஒழுங்குமுறை) சட்டம் 1978, நில சீர்திருத்தச் சட்டம் மற்றும் மாநில / மத்திய அரசு எந்தவொரு சட்டமோ, அரசாணையோ பாதிப்பை ஏற்படுத்தவில்லை என்று விற்பனையாளர் உறுதி கூறுகிறார்."
+  },
+
+  "section_7_label": "பகுதி 7 — விவசாய நிலம் சிறப்புச் சரத்துகள்",
+  "agriculture_special": {
+    "land_nature_detail": "{{NANJAI_PUNJAI_DETAIL}}",
+    "land_nature_clause": "இந்த விவசாய நிலம் {{NANJAI_PUNJAI_DETAIL}} (நஞ்சை / புஞ்சை) வகையினதாகும். இதன் வகை மாற்றம் (Change of Land Use) செய்ய விரும்பினால், கொள்முதலாளர் தமிழ்நாடு அரசின் விதிகளின்படி (TN Change of Land Use Rules, 2017) தனியே அனுமதி பெற வேண்டும்.",
+    "irrigation_clause": "இந்த நிலத்தில் உள்ள அனைத்து நீர்ப்பாசன உரிமைகளும் (கால்வாய் பாசன பங்கு, கிணறு, ஆழ்துளைக் கிணறு, ஏரி பாசன பங்கு), தண்ணீர் கட்டமைப்புகளும் இந்த கிரையத்தோடு முழுமையான உரிமையுடன் கொள்முதலாளருக்கு மாற்றப்படுகின்றன. சர்ச்சைக்குரிய நீர் பங்கு ஏதும் இல்லை என்று விற்பனையாளர் உறுதி கூறுகிறார்.",
+    "standing_crops":  "{{STANDING_CROPS}}",
+    "trees_detail":    "{{TREES_DETAIL}}",
+    "farm_structure":  "{{FARM_STRUCTURE}}",
+    "fmb_clause": "சர்வே துறையினரால் அளிக்கப்பட்ட வயல் அளவீட்டு வரைபடம் (Field Measurement Book — FMB Sketch) / TSLR நகல் அசலில் கொள்முதலாளரிடம் கொடுக்கப்பட்டுள்ளது. FMB-ல் காட்டப்பட்ட எல்லைகளுக்கு உட்பட்டே இந்த விற்பனை நடைபெறுகிறது.",
+    "adangal_clause": "இந்த நிலத்திற்கான அடங்கல் (Adangal), A-Register, மற்றும் கிராம நகலில் (Village Account) விற்பனையாளர் பெயரே காணப்படுகிறது. இந்த கிரயம் பதிவான பின் அனைத்து வருவாய் பதிவேடுகளிலும் (Patta, Chitta, Adangal, A-Register) கொள்முதலாளர் பெயரில் பெயர்மாற்றம் (Mutation) செய்துகொள்ள வேண்டியது."
+  },
+
+  "section_8_label": "பகுதி 8 — ஆட்சி ஒப்படைப்பும் உரிமை மாற்றமும்",
+  "section_8_text": "இன்று இந்த சுத்த விக்கிரயப் பத்திரம் பதிவாகும் நாளிலிருந்தே மேற்கண்ட விவசாய நிலத்தை கொள்முதலாளர் தனது வசம் கைப்பற்றி, தனது புத்திர பௌத்திரர்களுக்கும் வாரிசுகளுக்கும் பாரம்பரியமாக, வித்தொத்தி, கிரையம், தானம், அடமானம், குத்தகை, கேடயம் மற்றும் சகல வினுமிய நடவடிக்கைகளுக்கும் யோக்கியமாக, சகல சர்வ சுதந்திர பாத்தியங்களுடன் என்றென்றைக்கும் ஆண்டு அனுபவித்துக்கொள்ள வேண்டியது. இந்த கிரயம் நடைபெற்ற நாளிலிருந்து இந்த விவசாய நிலத்தின் மீது விற்பனையாளருக்கோ அவரது வாரிசுகளுக்கோ எந்தவிதமான உரிமையோ, பாத்தியமோ, பின்தொடர்ச்சியோ கிடையாது என்று விற்பனையாளர் உறுதிபடக் கூறுகிறார். நிலத்திற்கான பட்டா, சிட்டா, அடங்கல், கட்சி எண், நீர்வரி பதிவு ஆகியவை கொள்முதலாளர் பெயரில் மாற்றம் செய்து, இனிமேல் வரி வகையறாக்களை அவரே செலுத்திவர வேண்டியது.",
+
+  "section_9_label": "பகுதி 9 — அசல் ஆவணங்கள் ஒப்படைப்பு",
+  "documents_handed": {
+    "mother_deed":    "{{MOTHER_DEED}}",
+    "patta_copy":     "{{PATTA_COPY}}",
+    "chitta_adangal": "{{CHITTA_ADANGAL}}",
+    "ec_copy":        "{{EC_COPY}}",
+    "fmb_sketch":     "{{FMB_SKETCH}}",
+    "tax_receipts":   "{{TAX_RECEIPTS}}",
+    "id_copies":      "{{ID_COPIES}}",
+    "other_docs":     "{{OTHER_DOCS}}"
+  },
+
+  "section_10_label": "பகுதி 10 — சாட்சிகள் மற்றும் கையொப்பங்கள்",
+  "closing_text": "இந்தப்படிக்கு நாம் இருவரும் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் மனப்பூர்வமாய் சம்மதித்து எழுதிக்கொள்ளும் விவசாய நில சுத்த விக்கிரயப் பத்திரம். (This Absolute Sale Deed of Agriculture Land is executed with free will and consent of both parties in the presence of witnesses mentioned below.)",
+
+  "witnesses": [
+    {
+      "label":   "சாட்சி 1 (Witness 1)",
+      "name":    "{{WITNESS1_NAME}}",
+      "address": "{{WITNESS1_ADDRESS}}",
+      "aadhaar": "{{WITNESS1_AADHAAR}}"
+    },
+    {
+      "label":   "சாட்சி 2 (Witness 2)",
+      "name":    "{{WITNESS2_NAME}}",
+      "address": "{{WITNESS2_ADDRESS}}",
+      "aadhaar": "{{WITNESS2_AADHAAR}}"
+    }
+  ],
+
+  "registrar_note": "சார்பதிவகர் (Sub-Registrar) — முத்திரை மற்றும் கையொப்பம் (Office Seal & Signature of Sub-Registrar)",
+  "disclaimer": "இந்த ஆவணம் ஒரு மாதிரி வடிவம் மட்டுமே. இறுதியாக பதிவு செய்வதற்கு முன் உரிமம் பெற்ற ஆவண எழுத்தர் அல்லது வழக்கறிஞரிடம் சரிபார்க்கவும்."
+}

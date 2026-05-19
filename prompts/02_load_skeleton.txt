@@ -1,0 +1,14 @@
+TOOL: load_skeleton
+STEP: 2 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  deed_type (Step 1-இல் இருந்து) pass செய்.
+
+Return பார்:
+  skeleton JSON — {{PLACEHOLDER}} fields கொண்ட template.
+
+Next step:
+  skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை.
+
+பயனருக்கு சொல்ல வேண்டாம் — silent step.

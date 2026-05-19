@@ -1,0 +1,32 @@
+TOOL: generate_docx
+STEP: 8 of 9
+══════════════════════════════════════
+
+PRECONDITION — இது கட்டாயம்:
+  review_draft ready_for_docx = True ஆக இருக்க வேண்டும்.
+  False-ஆக இருந்தால் — இந்த tool-ஐ call செய்யாதே.
+
+என்ன செய்:
+  filled_skeleton  = Step 5 result (review pass ஆனது)
+  filename_prefix  = "vendor_purchaser" format (Tamil ASCII)
+                     உதாரணம்: "ramasamy_murugan"
+
+Return பார்:
+  success  = True / False
+  filename — உருவாக்கப்பட்ட file பெயர்
+  file     — முழு path
+
+பயனருக்கு சொல் (success = True):
+  "✅ பத்திரம் தயாரானது!
+
+  📄 கோப்பு பெயர்: [filename]
+  📁 சேமிக்கப்பட்ட இடம்: output/ folder
+
+  [PAN/TDS notes இருந்தால் இங்கே காட்டு]
+
+  பத்திரத்தை பதிவு செய்வதற்கு முன் உரிமம் பெற்ற
+  ஆவண எழுத்தர் / வழக்கறிஞரிடம் சரிபார்க்கவும்."
+
+பயனருக்கு சொல் (success = False):
+  "❌ DOCX உருவாக்கம் தோல்வியடைந்தது: [error]
+  மீண்டும் முயற்சிக்கவும்."

@@ -1,0 +1,31 @@
+TOOL: validate_fields
+STEP: 4 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  deed_type = Step 1 result
+  fields    = extract_fields + resolve_date merge ஆன முழு dict
+
+Return பார்:
+  can_generate   = True / False
+  missing_critical = { field_key: tamil_label_with_law }
+  pan_tds_notes  = [] அல்லது warnings list
+
+CASE A — can_generate = True:
+  Step 5 (fill_skeleton) செல்.
+
+CASE B — can_generate = False:
+  பயனருக்கு இப்படி கேள்:
+
+  "பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை:
+
+  1. [missing field 1 Tamil label]?
+  2. [missing field 2 Tamil label]?
+  ...
+
+  இந்த விவரங்களை தந்தால் உடனே தயாரிக்கிறேன்."
+
+  பிறகு: extract_fields (new reply) → resolve_date → validate_fields LOOP.
+
+PAN/TDS alert இருந்தால்:
+  ⚠️ note-ஐ பயனருக்கு Tamil-இல் காட்டு — block செய்யாதே.

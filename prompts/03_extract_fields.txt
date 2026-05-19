@@ -1,0 +1,26 @@
+TOOL: extract_fields
+STEP: 3 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  முதல் call:
+    deed_type  = Step 1 result
+    prompt     = பயனரின் முழு raw text
+    existing_fields = {} (empty)
+
+  Follow-up call (loop iteration):
+    deed_type       = same
+    prompt          = பயனரின் புதிய reply மட்டும்
+    existing_fields = கடைசியாக collect ஆன fields dict
+
+MERGE RULE — மிக முக்கியம்:
+  ✅ existing non-null values — மாற்றாதே
+  ✅ புதிய non-null values — null fields-ஐ overwrite செய்
+  ❌ fields dict-ஐ எப்போதும் reset செய்யாதே
+
+Return பார்:
+  fields       — merged key-value dict
+  missing_fields — இன்னும் இல்லாத fields list
+
+Next step:
+  fields dict-ஐ resolve_date-க்கும் validate_fields-க்கும் pass செய்.

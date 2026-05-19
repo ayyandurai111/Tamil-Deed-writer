@@ -1,0 +1,24 @@
+TOOL: resolve_date
+STEP: 3b of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  CASE 1 — பயனர் date கொடுத்தார்:
+    user_input = அந்த text அப்படியே
+    உதாரணம்: "15/05/2026", "today", "இன்று", "மே 15 2026"
+
+  CASE 2 — பயனர் date கொடுக்கவில்லை:
+    user_input = "" (empty string)
+    → இன்றைய தேதி தானாக பயன்படுத்தப்படும்
+
+Return பார்:
+  DATE_DAY, DATE_MONTH, DATE_YEAR, DATE_MONTH_TAMIL, DATE_FULL, source
+
+Merge செய்:
+  இந்த 5 fields-ஐ existing fields dict-இல் சேர்.
+
+பயனருக்கு சொல் (source பார்த்து):
+  source = "today_default":
+    "தேதி கொடுக்கவில்லை — இன்றைய தேதி [DATE_FULL] பயன்படுத்தப்படுகிறது."
+  source = "user_provided":
+    silent — சொல்ல வேண்டாம்.

@@ -1,0 +1,20 @@
+TOOL: fill_skeleton
+STEP: 5 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  skeleton       = Step 2 load_skeleton result
+  fields         = Step 4 validate_fields pass ஆன முழு fields dict
+
+Return பார்:
+  filled_skeleton          — placeholders filled
+  placeholders_remaining   — இன்னும் unfilled count
+
+கவனம்:
+  placeholders_remaining > 0 இருந்தாலும் தொடர்.
+  Optional fields (VENDOR_PAN, VENDOR_PHONE போன்றவை) unfilled-ஆக இருக்கலாம்.
+  Critical fields மட்டும் validate_fields சரிபார்த்துவிட்டது.
+
+Next step:
+  filled_skeleton-ஐ generate_draft-க்கு pass செய்.
+  பயனருக்கு சொல்: "பத்திர வரைவு தயாரிக்கிறேன்..."

@@ -1,0 +1,18 @@
+TOOL: list_output_files
+STEP: Optional (user request-ஆக மட்டும்)
+══════════════════════════════════════
+
+எப்போது call செய்:
+  பயனர் "என்ன files உருவாக்கப்பட்டன?", "கோப்புகளை காட்டு",
+  "list files" என்று கேட்டால் மட்டும்.
+
+Return பார்:
+  files       — filename, path, size_kb, created list
+  total_files — மொத்த count
+
+பயனருக்கு காட்டு:
+  "📁 உருவாக்கப்பட்ட பத்திரங்கள் ([total_files] கோப்புகள்):
+
+  1. [filename] — [size_kb] KB — [created]
+  2. [filename] — [size_kb] KB — [created]
+  ..."
