@@ -1,14 +1,16 @@
 """
 tools/review_draft.py
 =====================
-Tool 10 — review_draft
+Tool 7 — review_draft
 
-4-layer review of the Tamil deed draft before DOCX generation.
+3-layer review of the Tamil deed draft before DOCX generation.
 
-  Layer 1 — Missing Placeholders  : regex (instant, no API)
-  Layer 2 — Legal Checks          : rule-based (instant, no API)
-  Layer 3 — Consistency           : cross-field logic (instant, no API)
-  Layer 4 — Tamil Grammar & Style : Claude AI via Anthropic API
+  Layer 1 — Missing Placeholders  : finds any {{TAG}} still in draft
+  Layer 2 — Legal Checks          : Aadhaar digits, PAN format, date, boundaries
+  Layer 3 — Consistency           : district match, age sanity, amount vs words
+
+No external API calls. Claude (the orchestrating AI) reads the summary
+and can provide additional feedback to the user directly.
 
 Returns:
   {
@@ -17,22 +19,20 @@ Returns:
     "layers": {
       "placeholders": { "passed", "errors" },
       "legal":        { "passed", "errors" },
-      "consistency":  { "passed", "warnings" },
-      "tamil_grammar":{ "passed", "errors", "suggestions", "overall_quality" }
+      "consistency":  { "passed", "warnings" }
     },
     "critical_count": int,
     "warning_count":  int,
-    "summary":        str   (Tamil summary for user)
+    "summary":        str   (Tamil summary for Claude to show user)
   }
 
 Annotation:
-  readOnlyHint   = True    (no file writes)
-  idempotentHint = False   (AI layer result may vary slightly)
+  readOnlyHint   = True
+  idempotentHint = True
 """
 
 import re
 import json
-import asyncio
 from datetime import date
 from mcp.types import Tool, TextContent
 
@@ -40,15 +40,24 @@ from mcp.types import Tool, TextContent
 TOOL_DEFINITION = Tool(
     name="review_draft",
     description=(
-        "[STEP 7 of 9] Draft-ஐ 4 layers-இல் சரிபார். "
-        "L1 Placeholders: {{TAG}} unfilled regex. "
+        "[STEP 7 of 9] Draft-ஐ 2 layers-இல் சரிபார். "
+
+        "L1 Placeholders: {{TAG}} unfilled இருக்கிறதா. "
         "L2 Legal: Aadhaar 12 digits, PAN format, Date valid, 4 boundaries உள்ளனவா. "
-        "L3 Consistency: District match, Age≥18, Amount vs words. "
-        "L4 Tamil Grammar: Claude AI — இலக்கணம், legal terms, incomplete sentences. "
-        "ready_for_docx=True + warnings=0 → பயனருக்கு: ✅ சரிபார்ப்பு முடிந்தது → generate_docx செல். "
-        "ready_for_docx=True + warnings>0 → warnings காட்டு → generate_docx செல். "
-        "ready_for_docx=False → ❌ Critical errors Tamil-இல் காட்டு, திருத்தம் கேள். "
-        "பிறகு fill_skeleton → generate_draft → review_draft LOOP. "
+
+        "Tool return ஆன பிறகு — YOU (Claude) Layer 3 செய்: "
+        "draft_text-ஐ படித்து கீழ்கண்டவற்றை சரிபார்: "
+        "(a) விற்பவர் prefix (திரு/திருமதி) gender-உடன் பொருந்துகிறதா? "
+        "(b) 4 எல்லைகளும் வெவ்வேறு விவரம் உள்ளனவா (நான்கும் ஒரே விஷயமா)? "
+        "(c) AMOUNT_WORDS எண்ணுடன் பொருந்துகிறதா? "
+        "(d) Party பெயர்கள் draft முழுவதும் consistent-ஆக உள்ளனவா? "
+        "(e) ஏதேனும் Tamil grammar பிழை தெரிகிறதா? "
+        "Claude issues காண்பித்தால் பயனரிடம் confirm கேள். "
+
+        "ready_for_docx=True + no L3 issues → generate_docx செல். "
+        "ready_for_docx=True + L3 issues → பயனரிடம் காட்டி confirm கேள், பிறகு generate_docx. "
+        "ready_for_docx=False → ❌ Critical errors காட்டு, திருத்தம் கேள். "
+        "fill_skeleton → generate_draft → review_draft LOOP. "
         "❌ ready_for_docx=False-ஆக இருந்தால் generate_docx call செய்யாதே."
     ),
     inputSchema={
@@ -73,8 +82,7 @@ TOOL_DEFINITION = Tool(
     annotations={
         "title":          "Draft Reviewer",
         "readOnlyHint":   True,
-        "idempotentHint": False,   # AI layer output may vary
-        "openWorldHint":  True,    # calls Anthropic API
+        "idempotentHint": True,
     }
 )
 
@@ -85,13 +93,13 @@ TOOL_DEFINITION = Tool(
 
 def _layer1_placeholders(draft_text: str) -> dict:
     """Find any {{PLACEHOLDER}} tags still present in the draft."""
-    found = re.findall(r"\{\{([A-Z_]+)\}\}", draft_text)
+    found  = re.findall(r"\{\{([A-Z_]+)\}\}", draft_text)
     unique = sorted(set(found))
 
     errors = [
         {
             "field":    tag,
-            "issue":    f"{{{{ {tag} }}}} — இன்னும் நிரப்பப்படவில்லை",
+            "issue":    f"{{{{{tag}}}}} — இன்னும் நிரப்பப்படவில்லை",
             "severity": "critical"
         }
         for tag in unique
@@ -121,7 +129,7 @@ def _check_aadhaar(val: str, label: str) -> dict | None:
 
 
 def _check_pan(val: str, label: str) -> dict | None:
-    if not val or val in ("___", "பொருந்தாது", "—"):
+    if not val or val in ("___", "பொருந்தாது", "—") or str(val).startswith("{{"):
         return None
     if not re.fullmatch(r"[A-Z]{5}[0-9]{4}[A-Z]", str(val).strip().upper()):
         return {
@@ -147,7 +155,7 @@ def _check_amount(val: str) -> dict | None:
 
 def _check_date(day: str, month: str, year: str) -> dict | None:
     try:
-        d = date(int(year), int(month), int(day))
+        d     = date(int(year), int(month), int(day))
         today = date.today()
         if d > today:
             return {
@@ -172,15 +180,29 @@ def _layer2_legal(filled: dict, deed_type: str) -> dict:
     hdr = filled.get("header", {})
     con = filled.get("consideration", {})
 
-    # Aadhaar checks
-    for err in [
-        _check_aadhaar(v.get("aadhaar"), "விற்பவர் ஆதார்"),
-        _check_aadhaar(p.get("aadhaar"), "வாங்குபவர் ஆதார்"),
-    ]:
-        if err:
-            errors.append(err)
+    # Aadhaar
+    if deed_type == "agriculture":
+        for err in [
+            _check_aadhaar(v.get("aadhaar"), "விற்பவர் ஆதார்"),
+            _check_aadhaar(p.get("aadhaar"), "வாங்குபவர் ஆதார்"),
+        ]:
+            if err:
+                errors.append(err)
+    else:
+        # Plot deed: Aadhaar embedded in id_card field
+        for party_label, party in [("விற்பவர்", v), ("வாங்குபவர்", p)]:
+            id_val = str(party.get("id_card", "") or "")
+            digits = re.sub(r"[^0-9]", "", id_val)
+            # Look for 12 consecutive digits in the combined ID string
+            found_12 = re.search(r"\d{12}", id_val.replace(" ", ""))
+            if not found_12 and len(digits) < 12:
+                errors.append({
+                    "field":    f"{party_label}_ID",
+                    "issue":    f"{party_label} அடையாள அட்டையில் 12 இலக்க ஆதார் எண் இல்லை",
+                    "severity": "critical"
+                })
 
-    # PAN checks
+    # PAN
     for err in [
         _check_pan(v.get("pan"), "விற்பவர் PAN"),
         _check_pan(p.get("pan"), "வாங்குபவர் PAN"),
@@ -188,12 +210,12 @@ def _layer2_legal(filled: dict, deed_type: str) -> dict:
         if err:
             errors.append(err)
 
-    # Amount check
+    # Amount
     err = _check_amount(con.get("total_amount"))
     if err:
         errors.append(err)
 
-    # Date check
+    # Date
     err = _check_date(
         hdr.get("date_day", ""),
         hdr.get("date_month", ""),
@@ -202,7 +224,7 @@ def _layer2_legal(filled: dict, deed_type: str) -> dict:
     if err:
         errors.append(err)
 
-    # Boundaries — all 4 must exist
+    # Boundaries — all 4 mandatory for agriculture
     if deed_type == "agriculture":
         prop = filled.get("property", {})
         for boundary, label in [
@@ -243,54 +265,44 @@ def _layer3_consistency(filled: dict, deed_type: str) -> dict:
     prop_district = str(prop.get("district", "")).strip().lower()
     if hdr_district and prop_district and hdr_district != prop_district:
         warnings.append({
-            "field":   "DISTRICT",
-            "issue":   f"மாவட்டம் பொருந்தவில்லை — Header: '{hdr.get('district')}', Property: '{prop.get('district')}'",
+            "field":    "DISTRICT",
+            "issue":    f"மாவட்டம் பொருந்தவில்லை — Header: '{hdr.get('district')}', Property: '{prop.get('district')}'",
             "severity": "warning"
         })
 
-    # Vendor district vs header district
-    v_district = str(v.get("district", "")).strip().lower()
-    if v_district and hdr_district and v_district != hdr_district:
-        warnings.append({
-            "field":   "VENDOR_DISTRICT",
-            "issue":   f"விற்பவர் மாவட்டம் '{v.get('district')}' — Header மாவட்டம் '{hdr.get('district')}' — வேறுபாடு",
-            "severity": "warning"
-        })
-
-    # Amount vs words rough check (numeric digits only comparison)
+    # Amount vs words rough check
     amount_str = str(con.get("total_amount", "")).replace(",", "").strip()
-    words_str  = str(con.get("amount_in_words", "")).strip()
+    words_str  = str(con.get("amount_in_words", con.get("amount_words", ""))).strip()
     if amount_str.isdigit() and words_str and words_str not in ("___", ""):
         amount_int = int(amount_str)
-        # Simple lakh/crore keyword check
         if amount_int >= 10_000_000 and "கோடி" not in words_str:
             warnings.append({
-                "field":   "AMOUNT_WORDS",
-                "issue":   f"தொகை {amount_int:,} — ₹1 கோடிக்கு மேல், ஆனால் 'கோடி' எழுத்தில் இல்லை",
+                "field":    "AMOUNT_WORDS",
+                "issue":    f"தொகை {amount_int:,} — ₹1 கோடிக்கு மேல், ஆனால் 'கோடி' எழுத்தில் இல்லை",
                 "severity": "warning"
             })
         elif amount_int >= 100_000 and "லட்சம்" not in words_str and "கோடி" not in words_str:
             warnings.append({
-                "field":   "AMOUNT_WORDS",
-                "issue":   f"தொகை {amount_int:,} — ₹1 லட்சத்திற்கு மேல், ஆனால் 'லட்சம்' எழுத்தில் இல்லை",
+                "field":    "AMOUNT_WORDS",
+                "issue":    f"தொகை {amount_int:,} — ₹1 லட்சத்திற்கு மேல், ஆனால் 'லட்சம்' எழுத்தில் இல்லை",
                 "severity": "warning"
             })
 
-    # Age sanity check
+    # Age sanity
     for party_label, party in [("விற்பவர்", v), ("வாங்குபவர்", p)]:
         age_str = str(party.get("age", "")).strip()
         if age_str.isdigit():
             age = int(age_str)
             if age < 18:
                 warnings.append({
-                    "field":   f"{party_label.upper()}_AGE",
-                    "issue":   f"{party_label} வயது {age} — 18 வயதுக்கு கீழ் சட்டப்படி ஒப்பந்தம் செல்லாது",
+                    "field":    f"{party_label}_AGE",
+                    "issue":    f"{party_label} வயது {age} — 18 வயதுக்கு கீழ் சட்டப்படி ஒப்பந்தம் செல்லாது",
                     "severity": "critical"
                 })
             elif age > 100:
                 warnings.append({
-                    "field":   f"{party_label.upper()}_AGE",
-                    "issue":   f"{party_label} வயது {age} — சரிபார்க்கவும்",
+                    "field":    f"{party_label}_AGE",
+                    "issue":    f"{party_label} வயது {age} — சரிபார்க்கவும்",
                     "severity": "warning"
                 })
 
@@ -298,113 +310,6 @@ def _layer3_consistency(filled: dict, deed_type: str) -> dict:
         "passed":   all(w["severity"] != "critical" for w in warnings),
         "warnings": warnings
     }
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  LAYER 4 — TAMIL GRAMMAR & STYLE (Claude AI)
-# ══════════════════════════════════════════════════════════════════════════════
-
-_GRAMMAR_SYSTEM_PROMPT = """நீ ஒரு Tamil legal document editor மற்றும் தமிழ் இலக்கண நிபுணர்.
-
-கீழே கொடுக்கப்படும் சுத்த விக்கிரயப் பத்திரம் (Sale Deed) draft-ஐ மட்டும் படி.
-இந்த 4 விஷயங்களை மட்டும் சரிபார்:
-
-1. தமிழ் இலக்கண தவறுகள் (வினை, வேற்றுமை, வல்லினம் மிகல்/மிகாமல்)
-2. Legal Tamil சொற்கள் சரியாக உள்ளனவா
-   (சரியானவை: விக்கிரயதாரர், கிரயதாரர், பத்திரதாரர், விக்கிரயம், கிரயம்)
-3. Sentences முழுமையாக உள்ளனவா — ஏதாவது தொடர் பாதியில் நிறுத்தப்பட்டதா?
-4. Legal deed-க்கு பொருத்தமற்ற வார்த்தைகள் உள்ளனவா?
-
-ONLY return valid JSON, no explanation, no markdown:
-{
-  "grammar_errors": [
-    {"line": "தவறான வரி அல்லது phrase", "issue": "என்ன தவறு", "fix": "சரியான வரி"}
-  ],
-  "legal_term_errors": [
-    {"wrong": "தவறான சொல்", "correct": "சரியான சொல்", "context": "எந்த இடத்தில்"}
-  ],
-  "incomplete_sentences": [
-    {"sentence": "முழுமையற்ற தொடர்"}
-  ],
-  "style_suggestions": [
-    {"original": "தற்போதைய வாக்கியம்", "suggestion": "மேம்படுத்தப்பட்ட வாக்கியம்"}
-  ],
-  "overall_quality": "good" | "fair" | "poor",
-  "quality_note": "ஒரு வரி கருத்து தமிழில்"
-}"""
-
-
-async def _layer4_grammar(draft_text: str) -> dict:
-    """Call Anthropic API to check Tamil grammar and legal style."""
-    try:
-        import aiohttp
-
-        # Limit draft to first 3000 chars to stay within token budget
-        excerpt = draft_text[:3000]
-
-        payload = {
-            "model":      "claude-sonnet-4-20250514",
-            "max_tokens": 1000,
-            "system":     _GRAMMAR_SYSTEM_PROMPT,
-            "messages": [
-                {"role": "user", "content": f"இந்த deed draft-ஐ சரிபார்: \n\n{excerpt}"}
-            ]
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={"Content-Type": "application/json"},
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as resp:
-                if resp.status != 200:
-                    raise RuntimeError(f"API returned {resp.status}")
-                data = await resp.json()
-
-        # Extract text from response
-        raw = ""
-        for block in data.get("content", []):
-            if block.get("type") == "text":
-                raw += block.get("text", "")
-
-        # Strip markdown fences if present
-        raw = re.sub(r"```json\s*", "", raw)
-        raw = re.sub(r"```\s*",     "", raw)
-        result = json.loads(raw.strip())
-
-        grammar_errors   = result.get("grammar_errors", [])
-        legal_errors     = result.get("legal_term_errors", [])
-        incomplete       = result.get("incomplete_sentences", [])
-        suggestions      = result.get("style_suggestions", [])
-        quality          = result.get("overall_quality", "fair")
-        quality_note     = result.get("quality_note", "")
-
-        all_errors = (
-            [{"type": "grammar",  **e} for e in grammar_errors] +
-            [{"type": "legal_term", **e} for e in legal_errors] +
-            [{"type": "incomplete", **e} for e in incomplete]
-        )
-
-        return {
-            "passed":          len(all_errors) == 0,
-            "errors":          all_errors,
-            "suggestions":     suggestions,
-            "overall_quality": quality,
-            "quality_note":    quality_note,
-            "ai_checked":      True
-        }
-
-    except Exception as e:
-        # If AI call fails — return warning, don't block DOCX
-        return {
-            "passed":          True,
-            "errors":          [],
-            "suggestions":     [],
-            "overall_quality": "unknown",
-            "quality_note":    f"AI சரிபார்ப்பு தற்காலிகமாக இயங்கவில்லை: {e}",
-            "ai_checked":      False
-        }
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -416,56 +321,44 @@ async def handle(arguments: dict) -> list[TextContent]:
     filled     = arguments.get("filled_skeleton", {})
     deed_type  = arguments.get("deed_type", "plot")
 
-    # Run layers 1–3 in parallel, layer 4 (AI) separately
     l1 = _layer1_placeholders(draft_text)
     l2 = _layer2_legal(filled, deed_type)
-    l3 = _layer3_consistency(filled, deed_type)
-    l4 = await _layer4_grammar(draft_text)
 
-    # Count totals
     critical_errors = (
-        [e for e in l1["errors"]   if e["severity"] == "critical"] +
-        [e for e in l2["errors"]   if e["severity"] == "critical"] +
-        [e for e in l3["warnings"] if e["severity"] == "critical"]
+        [e for e in l1["errors"] if e["severity"] == "critical"] +
+        [e for e in l2["errors"] if e["severity"] == "critical"]
     )
     warnings = (
-        [e for e in l2["errors"]   if e["severity"] == "warning"] +
-        [e for e in l3["warnings"] if e["severity"] == "warning"] +
-        [e for e in l4["errors"]]
+        [e for e in l2["errors"] if e["severity"] == "warning"]
     )
 
     critical_count = len(critical_errors)
     warning_count  = len(warnings)
-    has_errors     = critical_count > 0 or warning_count > 0
     ready_for_docx = critical_count == 0
 
-    # Build Tamil summary for user
     if ready_for_docx and warning_count == 0:
-        summary = "✅ Draft முழுவதும் சரியாக உள்ளது — DOCX உருவாக்கலாம்."
+        summary = "✅ L1+L2 சரிபார்ப்பு நிறைவு — Claude L3 consistency சரிபார்க்கும்."
     elif ready_for_docx and warning_count > 0:
         summary = (
-            f"⚠️  {warning_count} எச்சரிக்கைகள் உள்ளன — DOCX உருவாக்கலாம். "
-            "ஆனால் warnings-ஐ முதலில் படிக்கவும்."
+            f"⚠️  {warning_count} எச்சரிக்கைகள் — Claude L3 சரிபார்த்து பயனரிடம் காட்டும்."
         )
     else:
         summary = (
-            f"❌ {critical_count} critical தவறுகள் உள்ளன — "
-            "திருத்தியபின் மட்டுமே DOCX உருவாக்கவும்."
+            f"❌ {critical_count} critical தவறுகள் — திருத்தியபின் மட்டுமே தொடரவும்."
         )
 
     return [TextContent(
         type="text",
         text=json.dumps({
-            "has_errors":     has_errors,
+            "has_errors":     critical_count > 0 or warning_count > 0,
             "ready_for_docx": ready_for_docx,
             "critical_count": critical_count,
             "warning_count":  warning_count,
             "summary":        summary,
             "layers": {
-                "placeholders": l1,
-                "legal":        l2,
-                "consistency":  l3,
-                "tamil_grammar": l4
+                "L1_placeholders": l1,
+                "L2_legal":        l2,
+                "L3_consistency":  "Claude performs this check after tool returns"
             }
         }, ensure_ascii=False, indent=2)
     )]

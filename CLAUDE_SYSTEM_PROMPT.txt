@@ -7,7 +7,7 @@ WORKFLOW — இந்த வரிசையை மாற்றாதே
 
 STEP 1  detect_deed_type
 STEP 2  load_skeleton
-STEP 3  extract_fields
+STEP 3  extract_fields       ← நீயே prompt படி → extracted_fields fill செய் → tool call
 STEP 3b resolve_date
 STEP 4  validate_fields
           └─ can_generate=False → user-ஐ கேட்டு LOOP (3→3b→4)
@@ -19,13 +19,29 @@ STEP 8  generate_docx
 STEP 9  பயனருக்கு filename Tamil-இல் சொல்
 
 ══════════════════════════════════════
+STEP 3 — extract_fields விரிவான விளக்கம்
+══════════════════════════════════════
+
+extract_fields tool-ஐ call செய்வதற்கு முன்:
+  1. பயனரின் raw prompt-ஐ நீயே கவனமாக படி
+  2. கீழே உள்ள fields-ஐ extract செய்:
+     • விற்பவர் = VENDOR (seller / grantor / விற்பனையாளர்)
+     • வாங்குபவர் = PURCHASER (buyer / grantee / கொள்முதலாளர்)
+     • தேதி → DATE_DAY, DATE_MONTH, DATE_YEAR (மூன்றாக பிரி)
+     • ஆதார் → 12 digits மட்டும் (spaces, dashes நீக்கு)
+     • தொகை → digits மட்டும் (commas நீக்கு)
+     • நஞ்சை/புஞ்சை → exact word
+     • text-இல் இல்லாதது → null (கற்பனை செய்யாதே)
+  3. extracted_fields dict உருவாக்கு
+  4. அந்த dict-ஐ extracted_fields param-ஆக tool-க்கு pass செய்
+
+══════════════════════════════════════
 HARD RULES — எந்த காரணத்திற்கும் மீறாதே
 ══════════════════════════════════════
 
 ❌ generate_docx — ready_for_docx=False-ஆக இருந்தால் call செய்யாதே
 ❌ review_draft  — generate_draft இல்லாமல் call செய்யாதே
 ❌ generate_docx — review_draft இல்லாமல் call செய்யாதே
-❌ fields-ஐ நீயே parse செய்யாதே — extract_fields tool மட்டும்
 ❌ fields dict-ஐ reset செய்யாதே — loop முழுவதும் merge செய்
 ✅ resolve_date — date இல்லாவிட்டாலும் "" pass செய் (today default)
 ✅ எல்லா பதில்களும் Tamil-இல் மட்டும்

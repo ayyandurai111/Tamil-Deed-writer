@@ -3,75 +3,78 @@ tools/detect_deed_type.py
 =========================
 Tool 1 — detect_deed_type
 
-Determines whether the user prompt describes an agriculture land deed
-or a plot/site deed by scoring keyword matches.
+Claude (the orchestrating AI) reads the user prompt and determines deed type.
+This tool receives Claude's determination, validates it, and returns it.
+
+No keyword scoring. Claude reads context, not keywords.
 
 Annotation:
-  readOnlyHint   = True   (no data is written or modified)
-  idempotentHint = True   (same prompt always returns same result)
+  readOnlyHint   = True
+  idempotentHint = True
 """
 
 import json
 from mcp.types import Tool, TextContent
 
-# ── Tool definition (returned in list_tools) ───────────────────────────────────
 TOOL_DEFINITION = Tool(
     name="detect_deed_type",
     description=(
-        "[STEP 1 of 9] பயனரின் prompt-ஐ படித்து deed வகை கண்டுபிடி. "
-        "user_prompt = பயனரின் முழு raw text. "
-        "Returns deed_type: 'agriculture' (விவசாய நிலம்) or 'plot' (மனை நிலம்). "
+        "[STEP 1 of 9] "
+        "YOU (Claude) read the user prompt and determine the deed type yourself. "
+        "Then call this tool with your determination. "
+
+        "HOW TO DETERMINE: "
+        "(1) Agriculture = விவசாய நிலம், ஏக்கர், நஞ்சை, புஞ்சை, survey no, பட்டா, "
+        "FMB, கால்வாய், paddy, farm, acre, cent, crop. "
+        "(2) Plot = மனை, வீட்டு மனை, site, sq ft, sqft, square feet, door no, "
+        "ward, வார்டு, கதவு எண், layout, residential, urban. "
+        "(3) Context wins over keywords — "
+        "'2400 sqft வீட்டுமனை' → plot even without explicit 'plot' word. "
+        "(4) If unclear → default to plot. "
+
+        "After you determine, call this tool with deed_type and your reason. "
         "Result-ஐ வைத்துக்கொள் — load_skeleton-க்கு தேவை. "
-        "பயனருக்கு சொல்: நிலம் வகை கண்டுபிடிக்கப்பட்டது."
+        "பயனருக்கு சொல்: '[deed_type] பத்திரம் தயாரிக்கிறோம்.'"
     ),
     inputSchema={
         "type": "object",
         "properties": {
-            "user_prompt": {
+            "deed_type": {
                 "type": "string",
-                "description": "The raw user prompt describing the property."
+                "enum": ["agriculture", "plot"],
+                "description": "The deed type YOU determined from the user prompt."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Brief reason for your determination (e.g. 'user mentioned ஏக்கர் and நஞ்சை')."
             }
         },
-        "required": ["user_prompt"]
+        "required": ["deed_type"]
     },
-    # ── Annotations ───────────────────────────────────────────────────────────
     annotations={
-        "title":         "Deed Type Detector",
-        "readOnlyHint":  True,    # reads only — no writes
-        "idempotentHint": True,   # deterministic
+        "title":          "Deed Type Validator",
+        "readOnlyHint":   True,
+        "idempotentHint": True,
     }
 )
 
-# ── Keyword banks ─────────────────────────────────────────────────────────────
-_AGRICULTURE_KW = [
-    "விவசாய", "நஞ்சை", "புஞ்சை", "ஏக்கர்", "சென்ட்", "survey",
-    "பட்டா", "சிட்டா", "அடங்கல", "fmb", "கால்வாய்", "நீர்வரி",
-    "kist", "a-register", "acre", "cent", "nanjai", "punjai",
-    "agriculture", "farm", "paddy", "field", "crop", "புல எண்",
-    "நில", "ஏரி", "கிணறு", "ஆழ்துளை"
-]
 
-_PLOT_KW = [
-    "மனை", "plot", "sq ft", "sqft", "square feet", "door no",
-    "ward", "வார்டு", "கதவு எண்", "காலிமனை", "site", "வீட்டு மனை",
-    "residential", "urban", "நகர்ப்புற", "தெரு", "layout"
-]
-
-
-# ── Handler ────────────────────────────────────────────────────────────────────
 async def handle(arguments: dict) -> list[TextContent]:
-    prompt = arguments.get("user_prompt", "").lower()
+    deed_type = arguments.get("deed_type", "plot")
+    reason    = arguments.get("reason", "")
 
-    ag_score   = sum(1 for kw in _AGRICULTURE_KW if kw in prompt)
-    plot_score = sum(1 for kw in _PLOT_KW        if kw in prompt)
-    deed_type  = "agriculture" if ag_score >= plot_score else "plot"
+    # Validate
+    if deed_type not in ("agriculture", "plot"):
+        deed_type = "plot"
+
+    label = "விவசாய நிலம்" if deed_type == "agriculture" else "மனை நிலம்"
 
     return [TextContent(
         type="text",
         text=json.dumps({
-            "deed_type":         deed_type,
-            "agriculture_score": ag_score,
-            "plot_score":        plot_score,
-            "message":           f"Detected deed type: {deed_type}"
+            "deed_type": deed_type,
+            "label":     label,
+            "reason":    reason,
+            "message":   f"Deed type confirmed: {deed_type} ({label})"
         }, ensure_ascii=False, indent=2)
     )]

@@ -189,7 +189,7 @@ def _build_agriculture_docx(data: dict, output_path: Path):
     # Section 3 — Consideration
     _heading_para(doc, "பகுதி 3 — விற்பனை மொத்த தொகை விவரம்")
     _field_row(doc, "மொத்த விலை",      _blank(con.get("total_amount")))
-    _field_row(doc, "தொகை எழுத்தில்",  _blank(con.get("amount_words")))
+    _field_row(doc, "தொகை எழுத்தில்",  _blank(con.get("amount_in_words")))
     _field_row(doc, "செலுத்திய விதம்", _blank(con.get("payment_mode")))
 
     # Witnesses & Signatures

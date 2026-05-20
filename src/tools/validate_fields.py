@@ -84,12 +84,24 @@ def run_validation(deed_type: str, fields: dict) -> dict:
 
     # If PAN needed, add to missing if absent
     if pan_needed:
-        for pan_key in ("VENDOR_PAN", "PURCHASER_PAN"):
-            if not fields.get(pan_key):
-                missing[pan_key] = (
-                    f"{pan_key.split('_')[0].title()} PAN எண் "
-                    f"(IT Rule 114B — ₹10 லட்சத்திற்கு மேல் PAN கட்டாயம்)"
-                )
+        if deed_type == "agriculture":
+            for pan_key in ("VENDOR_PAN", "PURCHASER_PAN"):
+                if not fields.get(pan_key):
+                    missing[pan_key] = (
+                        f"{pan_key.split('_')[0].title()} PAN எண் "
+                        f"(IT Rule 114B — ₹10 லட்சத்திற்கு மேல் PAN கட்டாயம்)"
+                    )
+        else:
+            # Plot deed: PAN is embedded inside VENDOR_ID / PURCHASER_ID
+            import re as _re
+            pan_pattern = r"[A-Z]{5}[0-9]{4}[A-Z]"
+            for id_key, label in (("VENDOR_ID", "விற்பவர்"), ("PURCHASER_ID", "வாங்குபவர்")):
+                val = fields.get(id_key, "") or ""
+                if not _re.search(pan_pattern, val.upper()):
+                    missing[id_key + "_PAN"] = (
+                        f"{label} PAN எண் (VENDOR_ID-ல் சேர்க்கவும் — "
+                        f"IT Rule 114B — ₹10 லட்சத்திற்கு மேல் PAN கட்டாயம்)"
+                    )
 
     # Advisory notes in Tamil
     notes = []
