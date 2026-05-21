@@ -3,27 +3,18 @@ tools/extract_fields.py
 =======================
 Tool 3 — extract_fields
 
-Claude (the orchestrating AI) reads the user prompt and extracts fields itself.
-This tool receives the already-extracted fields, merges with existing_fields,
-and returns what is still missing.
+Claude reads the user prompt and extracts fields itself.
+This tool receives extracted fields, normalizes keys to UPPERCASE,
+merges with existing_fields, and returns what is still missing.
 
-No regex. No extra API call. Claude IS the AI — trust it to extract.
-
-inputSchema change:
-  - REMOVED: prompt  (Claude reads it directly, not passed here)
-  - ADDED:   extracted_fields  (Claude fills this from the prompt)
-  - KEPT:    existing_fields   (previous turn accumulation)
-
-Annotation:
-  readOnlyHint   = True
-  idempotentHint = True
+FIX: All keys normalized to UPPERCASE before storing,
+     so key-case mismatches from Claude never cause placeholder leaks.
 """
 
 import json
 from mcp.types import Tool, TextContent
 from constants import CRITICAL_FIELDS
 
-# ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
     name="extract_fields",
     description=(
@@ -44,6 +35,7 @@ TOOL_DEFINITION = Tool(
         "(5) TOTAL_AMOUNT — digits only, strip commas. "
         "(6) NANJAI_OR_PUNJAI — use exact Tamil word found in text. "
         "(7) If a field is not mentioned in the prompt → set it to null. Never guess. "
+        "(8) All keys MUST be UPPERCASE (e.g. VENDOR_NAME not vendor_name). "
 
         "MERGE RULE (this tool handles it): "
         "existing non-null values are never overwritten. "
@@ -63,7 +55,7 @@ TOOL_DEFINITION = Tool(
                 "type": "object",
                 "description": (
                     "Fields YOU extracted from the user prompt. "
-                    "Every key must be a valid CRITICAL_FIELDS key for the deed_type. "
+                    "Every key must be UPPERCASE matching CRITICAL_FIELDS. "
                     "Use null for fields not found in the prompt."
                 )
             },
@@ -86,28 +78,36 @@ TOOL_DEFINITION = Tool(
 )
 
 
-# ── Handler — merge only, zero extraction logic ────────────────────────────────
+def _normalize(fields: dict) -> dict:
+    """Normalize all keys to UPPERCASE and strip null-like values."""
+    out = {}
+    for k, v in fields.items():
+        key = str(k).strip().upper()
+        if v in (None, "null", "None", "undefined", ""):
+            out[key] = None
+        else:
+            out[key] = str(v).strip() if not isinstance(v, (dict, list)) else v
+    return out
+
+
 async def handle(arguments: dict) -> list[TextContent]:
     deed_type        = arguments.get("deed_type", "plot")
     extracted_fields = arguments.get("extracted_fields") or {}
-    existing_fields  = arguments.get("existing_fields") or {}
+    existing_fields  = arguments.get("existing_fields")  or {}
 
-    # Start from existing accumulated fields
-    merged = dict(existing_fields)
+    # Normalize both to UPPERCASE keys
+    extracted = _normalize(extracted_fields)
+    existing  = _normalize(existing_fields)
 
-    # Merge: new non-null values fill null slots only
-    for key, val in extracted_fields.items():
-        # Normalise "null" strings → None
-        if val in ("null", "None", "", "undefined"):
-            val = None
-        if val is not None and merged.get(key) is None:
+    # Merge: start from existing, fill nulls with new extracted values
+    merged = dict(existing)
+    for key, val in extracted.items():
+        if key not in merged or merged[key] is None:
             merged[key] = val
-        elif key not in merged:
-            merged[key] = val if val not in (None, "null", "None", "") else None
 
     # Ensure every critical field key is present (None if never found)
     for key in CRITICAL_FIELDS.get(deed_type, {}):
-        merged.setdefault(key, None)
+        merged.setdefault(key.upper(), None)
 
     found   = [k for k, v in merged.items() if v is not None]
     missing = [k for k, v in merged.items() if v is None]

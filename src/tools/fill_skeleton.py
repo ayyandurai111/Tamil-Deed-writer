@@ -6,16 +6,22 @@ Tool 5 — fill_skeleton
 Walks the skeleton JSON tree and replaces every {{PLACEHOLDER}}
 with the corresponding value from the fields dict.
 
+FIXES:
+  1. if val is not None  (was: if val — skipped 0, False, "0")
+  2. After replace, all remaining {{...}} placeholders → "" (blank)
+     so docx never shows raw placeholder text
+  3. Keys normalized to UPPER before matching
+
 Annotation:
-  readOnlyHint   = True   (produces a new object — no file writes)
-  idempotentHint = True   (same skeleton + fields → same result)
+  readOnlyHint   = True
+  idempotentHint = True
 """
 
 import json
+import re
 import copy
 from mcp.types import Tool, TextContent
 
-# ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
     name="fill_skeleton",
     description=(
@@ -52,14 +58,34 @@ TOOL_DEFINITION = Tool(
 
 
 # ── Core fill function ─────────────────────────────────────────────────────────
+
 def fill(skeleton: dict, fields: dict) -> dict:
-    """Recursively replace {{KEY}} placeholders throughout the skeleton."""
+    """
+    Recursively replace {{KEY}} placeholders throughout the skeleton.
+
+    FIX 1: use `is not None` — so "0", False, "" are still replaced
+    FIX 2: normalize keys to UPPER before matching
+    FIX 3: after all replacements, erase any remaining {{...}} → ""
+    """
+
+    # Normalize all keys to UPPERCASE so Claude's key-case doesn't matter
+    normalized = {}
+    for k, v in fields.items():
+        upper_key = str(k).strip().upper()
+        # Skip null-like values — treat as missing
+        if v in (None, "null", "None", "undefined", ""):
+            normalized[upper_key] = None
+        else:
+            normalized[upper_key] = str(v).strip()
 
     def _replace(obj):
         if isinstance(obj, str):
-            for key, val in fields.items():
-                if val:
-                    obj = obj.replace(f"{{{{{key}}}}}", str(val))
+            # FIX 1: replace only when value is not None
+            for key, val in normalized.items():
+                if val is not None:
+                    obj = obj.replace(f"{{{{{key}}}}}", val)
+            # FIX 3: erase any remaining unfilled placeholders → blank string
+            obj = re.sub(r"\{\{[A-Z0-9_]+\}\}", "", obj)
             return obj
         if isinstance(obj, dict):
             return {k: _replace(v) for k, v in obj.items()}
@@ -69,15 +95,16 @@ def fill(skeleton: dict, fields: dict) -> dict:
 
     filled = _replace(copy.deepcopy(skeleton))
 
-    # Count how many placeholders remain unfilled
-    filled_str      = json.dumps(filled, ensure_ascii=False)
-    remaining       = filled_str.count("{{")
-    fields_applied  = sum(1 for v in fields.values() if v)
+    # Count stats BEFORE erasing (already erased above, so count 0 remaining)
+    filled_str     = json.dumps(filled, ensure_ascii=False)
+    remaining      = filled_str.count("{{")   # should be 0 after fix 3
+    fields_applied = sum(1 for v in normalized.values() if v is not None)
 
     return filled, fields_applied, remaining
 
 
 # ── Handler ────────────────────────────────────────────────────────────────────
+
 async def handle(arguments: dict) -> list[TextContent]:
     skeleton = arguments.get("skeleton", {})
     fields   = arguments.get("fields",   {})
@@ -87,12 +114,12 @@ async def handle(arguments: dict) -> list[TextContent]:
     return [TextContent(
         type="text",
         text=json.dumps({
-            "filled_skeleton":       filled,
-            "fields_applied":        fields_applied,
+            "filled_skeleton":        filled,
+            "fields_applied":         fields_applied,
             "placeholders_remaining": remaining,
             "message": (
                 f"✅ {fields_applied} fields applied. "
-                f"{remaining} placeholders still unfilled."
+                f"{remaining} placeholders still unfilled (blanked out in output)."
             )
         }, ensure_ascii=False, indent=2)
     )]

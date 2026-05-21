@@ -9,7 +9,6 @@
     "date_day":          "{{DATE_DAY}}",
     "date_month":        "{{DATE_MONTH}}",
     "date_year":         "{{DATE_YEAR}}",
-    "date_words":        "{{DATE_WORDS}}",
     "registration_office": "{{REG_OFFICE}}",
     "district":          "{{DISTRICT}}",
     "taluk":             "{{TALUK}}"

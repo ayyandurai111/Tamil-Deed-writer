@@ -3,13 +3,15 @@ tools/generate_docx.py
 ======================
 Tool 6 — generate_docx
 
-Builds the final Tamil Sale Deed .docx from a filled skeleton dict.
-Uses python-docx with Latha font for Tamil rendering.
-
-Annotation:
-  readOnlyHint    = False   (writes a .docx file to disk)
-  destructiveHint = False   (creates new file; never overwrites existing data)
-  idempotentHint  = False   (each call produces a timestamped new file)
+Professional Tamil Sale Deed layout:
+- Single uniform font: Latha 12pt throughout
+- Title only: 14pt Bold Center
+- "சொத்து விவரம்" label: 12pt Bold
+- No section headings, no dividers, no bold sub-headers in body
+- Date + Purchaser + Vendor in ONE opening paragraph
+- All clauses as justified paragraphs
+- Property as one comma-separated paragraph
+- Line-by-line only for witnesses and signatures
 """
 
 import json
@@ -17,9 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from mcp.types import Tool, TextContent
 
-# python-docx imports
 from docx import Document
-from docx.shared import Pt, Cm
+from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
@@ -34,7 +35,7 @@ TOOL_DEFINITION = Tool(
         "False-ஆக இருந்தால் இந்த tool-ஐ call செய்யாதே — hard rule. "
         "filled_skeleton = Step 5 result (review pass ஆனது). "
         "filename_prefix = 'vendor_purchaser' format உதாரணம்: 'ramasamy_murugan'. "
-        "success=True: பயனருக்கு சொல்: ✅ பத்திரம் தயாரானது! 📄 [filename] 📁 output/. "
+        "success=True: உடனே list_output_files tool call செய் — download link பயனருக்கு காட்டு. "
         "PAN/TDS notes இருந்தால் காட்டு. disclaimer காட்டு. "
         "success=False: ❌ தோல்வி: [error] மீண்டும் முயற்சிக்கவும்."
     ),
@@ -54,253 +55,623 @@ TOOL_DEFINITION = Tool(
         "required": ["filled_skeleton"]
     },
     annotations={
-        "title":          "DOCX Generator",
-        "readOnlyHint":   False,   # writes a file
-        "destructiveHint": False,  # does not overwrite or delete anything
-        "idempotentHint": False,   # each call makes a new timestamped file
+        "title":           "DOCX Generator",
+        "readOnlyHint":    False,
+        "destructiveHint": False,
+        "idempotentHint":  False,
     }
 )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  DOCX FORMATTING HELPERS
+#  CORE FONT HELPER — ONE font, ONE size everywhere
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _set_tamil_font(run, size_pt: int = 12, bold: bool = False):
+BODY_FONT  = "Latha"
+BODY_SIZE  = 12   # pt — used for ALL text
+TITLE_SIZE = 14   # pt — title only
+
+
+def _apply_font(run, size_pt: int = BODY_SIZE, bold: bool = False):
+    """Apply Latha font to a run. Single point of font control."""
     run.font.name = "Latha"
     run.font.size = Pt(size_pt)
     run.font.bold = bold
-    r    = run._r
-    rPr  = r.get_or_add_rPr()
+    rPr = run._r.get_or_add_rPr()
     rFonts = OxmlElement("w:rFonts")
-    rFonts.set(qn("w:ascii"),    "Latha")
-    rFonts.set(qn("w:hAnsi"),   "Latha")
-    rFonts.set(qn("w:cs"),      "Latha")
-    rFonts.set(qn("w:eastAsia"),"Latha")
+    for attr in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        rFonts.set(qn(attr), BODY_FONT)
     rPr.insert(0, rFonts)
 
 
-def _heading_para(doc, text: str, level: int = 1):
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p.paragraph_format.space_before = Pt(10)
-    p.paragraph_format.space_after  = Pt(4)
-    run = p.add_run(text)
-    _set_tamil_font(run, size_pt=13 if level == 1 else 12, bold=True)
-    return p
-
-
-def _body_para(doc, text: str, indent: bool = False):
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    p.paragraph_format.space_after = Pt(4)
-    if indent:
-        p.paragraph_format.left_indent = Cm(1)
-    run = p.add_run(text)
-    _set_tamil_font(run, size_pt=12)
-    return p
-
-
-def _field_row(doc, label: str, value: str):
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p.paragraph_format.space_after = Pt(2)
-    p.paragraph_format.left_indent = Cm(1)
-    lbl = p.add_run(f"{label} : ")
-    _set_tamil_font(lbl, size_pt=12, bold=True)
-    val = p.add_run(value if value and not value.startswith("{{") else "_______________")
-    _set_tamil_font(val, size_pt=12)
-    return p
-
-
-def _blank(val, fallback: str = "_______________") -> str:
+def _blank(val, fallback: str = "___________") -> str:
+    """Return value or blank placeholder if missing/unfilled."""
     if not val or str(val).startswith("{{"):
         return fallback
     return str(val)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AGRICULTURE DOCX BUILDER
+#  PARAGRAPH BUILDERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _title_para(doc, text: str):
+    """Document title — 14pt Bold Center."""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after  = Pt(6)
+    run = p.add_run(text)
+    _apply_font(run, size_pt=TITLE_SIZE, bold=True)
+    return p
+
+
+def _body_para(doc, text: str, bold: bool = False,
+               align=WD_ALIGN_PARAGRAPH.JUSTIFY,
+               space_before: int = 6, space_after: int = 6,
+               first_line_indent: bool = True):
+    """
+    Standard body paragraph — 12pt Latha Justified.
+    This is used for ALL prose content.
+    """
+    if not text or str(text).startswith("{{"):
+        return None
+    p = doc.add_paragraph()
+    p.alignment = align
+    p.paragraph_format.space_before = Pt(space_before)
+    p.paragraph_format.space_after  = Pt(space_after)
+    if first_line_indent:
+        p.paragraph_format.first_line_indent = Cm(0.75)
+    run = p.add_run(text)
+    _apply_font(run, size_pt=BODY_SIZE, bold=bold)
+    return p
+
+
+def _sig_para(doc, text: str):
+    """Signature / witness line — 12pt Left, no indent."""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.space_before = Pt(4)
+    p.paragraph_format.space_after  = Pt(4)
+    p.paragraph_format.first_line_indent = Cm(0)
+    run = p.add_run(text)
+    _apply_font(run, size_pt=BODY_SIZE, bold=False)
+    return p
+
+
+def _spacer(doc):
+    """Empty paragraph for visual spacing."""
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after  = Pt(0)
+    run = p.add_run("")
+    _apply_font(run)
+    return p
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PARTY TEXT BUILDER
+#  Returns a single Tamil prose string — NOT separate lines
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _party_text(d: dict, deed_type: str = "plot") -> str:
+    """
+    Build the full party description as a single flowing text string.
+    e.g. "45, அண்ணாநகர் 2வது தெரு, சென்னை 40 விலாசத்தில் வசிக்கும்
+          திரு பாலன் அவர்களின் குமார் சுமார் 35 வயதுள்ள
+          திரு.சுரேஷ் (அடையாள அட்டை XXXX-XXXX-1234) (கைபேசி எண்.9876543210)"
+    """
+    name       = _blank(d.get("name"))
+    age        = _blank(d.get("age"))
+    father     = _blank(d.get("father_name"))
+    relation   = _blank(d.get("relation", "மகன்"))
+    address    = _blank(d.get("address"))
+    village    = _blank(d.get("village", ""), "")
+    vattam     = _blank(d.get("vattam", ""), "")
+    district   = _blank(d.get("district", ""), "")
+    aadhaar    = _blank(d.get("aadhaar", d.get("id_card", "")))
+    phone      = _blank(d.get("phone"))
+    prefix     = _blank(d.get("prefix", "திரு"), "திரு")
+
+    # Build address part
+    addr_parts = [address]
+    if village and not village.startswith("_"):
+        addr_parts.append(village)
+    if vattam and not vattam.startswith("_"):
+        addr_parts.append(vattam)
+    if district and not district.startswith("_"):
+        addr_parts.append(district)
+    addr_str = ", ".join(addr_parts)
+
+    # Build identity part
+    if deed_type == "agriculture":
+        occupation = _blank(d.get("occupation", ""), "")
+        caste      = _blank(d.get("caste", ""), "")
+        id_part = f"{prefix}.{name}"
+        if relation and not relation.startswith("_"):
+            id_part += f" அவர்களின் {relation} {father}"
+        id_part += f" சுமார் {age} வயதுள்ள"
+        if caste and not caste.startswith("_"):
+            id_part += f" {caste}"
+        if occupation and not occupation.startswith("_"):
+            id_part += f" {occupation}"
+    else:
+        id_part = f"{prefix}.{father} அவர்களின் {relation} சுமார் {age} வயதுள்ள {prefix}.{name}"
+
+    text = f"{addr_str} விலாசத்தில் வசிக்கும் {id_part}"
+    text += f" (அடையாள அட்டை {aadhaar})"
+    text += f" (கைபேசி எண்.{phone})"
+    return text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  AGRICULTURE DEED BUILDER
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _build_agriculture_docx(data: dict, output_path: Path):
     doc = Document()
-    for section in doc.sections:
-        section.top_margin    = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
-        section.left_margin   = Cm(3)
-        section.right_margin  = Cm(2)
 
-    hdr  = data.get("header", {})
-    v    = data.get("vendor", {})
-    p    = data.get("purchaser", {})
-    prop = data.get("property", {})
-    con  = data.get("consideration", {})
-    wit  = data.get("witnesses", [{}, {}])
+    # Page margins — standard legal
+    for sec in doc.sections:
+        sec.top_margin    = Cm(2.5)
+        sec.bottom_margin = Cm(2.5)
+        sec.left_margin   = Cm(3.5)
+        sec.right_margin  = Cm(2.5)
 
-    # Title
-    t = doc.add_paragraph(); t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(t.add_run(data.get("title", "சுத்த விக்கிரயப் பத்திரம்")), 16, bold=True)
-    s = doc.add_paragraph(); s.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(s.add_run(data.get("subtitle", "ABSOLUTE SALE DEED — AGRICULTURE LAND")), 13, bold=True)
-    a = doc.add_paragraph(); a.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(a.add_run(data.get("act_ref", "")), 11)
-    doc.add_paragraph()
+    hdr   = data.get("header",        {})
+    v     = data.get("vendor",        {})
+    pur   = data.get("purchaser",     {})
+    prop  = data.get("property",      {})
+    con   = data.get("consideration", {})
+    wit   = data.get("witnesses",     [{}, {}])
 
-    # Header
-    _field_row(doc, "ஆவண தேதி",
-               f"{_blank(hdr.get('date_day'))}ம் / {_blank(hdr.get('date_month'))} மாதம் / {_blank(hdr.get('date_year'))} ஆம் ஆண்டு")
-    _field_row(doc, "பதிவு அலுவலகம்", _blank(hdr.get("registration_office")))
-    _field_row(doc, "ஜில்லா",  _blank(hdr.get("district")))
-    _field_row(doc, "தாலுக்கா", _blank(hdr.get("taluk")))
+    # ── 1. STAMP NOTE (small, center) ────────────────────────────────────────
+    stamp = data.get("stamp_note", "")
+    if stamp and not stamp.startswith("{{"):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after  = Pt(4)
+        run = p.add_run(stamp)
+        _apply_font(run, size_pt=BODY_SIZE)
 
-    # Section 1 — Parties
-    _heading_para(doc, "பகுதி 1 — தரப்பினர் விவரம்")
-    _heading_para(doc, "விற்பனையாளர் (VENDOR / SELLER) :", level=2)
-    for label, key in [("பெயர்", "name"), ("தந்தை / கணவர் பெயர்", "father_name"),
-                        ("வயது", "age"), ("விலாசம்", "address"),
-                        ("மாவட்டம்", "district"), ("ஆதார் எண்", "aadhaar"),
-                        ("பான் எண்", "pan"), ("கைபேசி", "phone")]:
-        _field_row(doc, label, _blank(v.get(key)))
+    # ── 2. TITLE ──────────────────────────────────────────────────────────────
+    _title_para(doc, data.get("title", "சுத்த விக்கிரயப் பத்திரம்"))
+    _title_para(doc, data.get("subtitle", "ABSOLUTE SALE DEED — AGRICULTURE LAND"))
 
-    _heading_para(doc, "கொள்முதலாளர் (PURCHASER / BUYER) :", level=2)
-    for label, key in [("பெயர்", "name"), ("தந்தை / கணவர் பெயர்", "father_name"),
-                        ("வயது", "age"), ("விலாசம்", "address"),
-                        ("மாவட்டம்", "district"), ("ஆதார் எண்", "aadhaar"),
-                        ("பான் எண்", "pan"), ("கைபேசி", "phone")]:
-        _field_row(doc, label, _blank(p.get(key)))
+    act_ref = data.get("act_ref", "")
+    if act_ref and not act_ref.startswith("{{"):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after  = Pt(10)
+        run = p.add_run(act_ref)
+        _apply_font(run, size_pt=BODY_SIZE)
 
-    # Section 2 — Property
-    _heading_para(doc, "பகுதி 2 — சொத்து விவரம்")
-    _field_row(doc, "மாவட்டம்",   _blank(prop.get("district")))
-    _field_row(doc, "தாலுக்கா",   _blank(prop.get("taluk")))
-    _field_row(doc, "கிராமம்",    _blank(prop.get("village")))
-    _field_row(doc, "சர்வே எண்",  _blank(prop.get("survey_no")))
-    _field_row(doc, "பட்டா எண்",  _blank(prop.get("patta_no")))
-    _field_row(doc, "நில வகை",    _blank(prop.get("land_nature")))
-    _field_row(doc, "மொத்த பரப்பளவு",
-               f"{_blank(prop.get('extent_acre'))} ஏக்கர் {_blank(prop.get('extent_cent', ''))} சென்ட்")
+    # ── 3. OPENING PARAGRAPH — Date + Purchaser + Vendor (ONE paragraph) ─────
+    date_day   = _blank(hdr.get("date_day"))
+    date_month = _blank(hdr.get("date_month"))
+    date_year  = _blank(hdr.get("date_year"))
+    reg_office = _blank(hdr.get("registration_office"), "")
+    taluk      = _blank(hdr.get("taluk"), "")
+    district   = _blank(hdr.get("district"), "")
 
-    _heading_para(doc, "நான்கு எல்லைகள் (Four Boundaries)", level=2)
-    for direction, key in [("கிழக்கு (East)", "boundary_east"), ("மேற்கு (West)", "boundary_west"),
-                            ("வடக்கு (North)", "boundary_north"), ("தெற்கு (South)", "boundary_south")]:
-        _field_row(doc, direction, _blank(prop.get(key)))
+    date_str = f"{date_day}ம் தேதி {date_month} மாதம் {date_year}ம் ஆண்டு"
+    if reg_office and not reg_office.startswith("_"):
+        date_str += f", {reg_office} சார்பதிவக அலுவலகம்"
+    if taluk and not taluk.startswith("_"):
+        date_str += f", {taluk} தாலுக்கா"
+    if district and not district.startswith("_"):
+        date_str += f", {district} மாவட்டம்"
 
-    # Section 3 — Consideration
-    _heading_para(doc, "பகுதி 3 — விற்பனை மொத்த தொகை விவரம்")
-    _field_row(doc, "மொத்த விலை",      _blank(con.get("total_amount")))
-    _field_row(doc, "தொகை எழுத்தில்",  _blank(con.get("amount_in_words")))
-    _field_row(doc, "செலுத்திய விதம்", _blank(con.get("payment_mode")))
+    pur_text = _party_text(pur, deed_type="agriculture")
+    v_text   = _party_text(v,   deed_type="agriculture")
 
-    # Witnesses & Signatures
-    doc.add_paragraph()
-    _heading_para(doc, "சாட்சிகள் மற்றும் கையொப்பங்கள்")
+    opening = (
+        f"{date_str},\n\n"
+        f"{pur_text} அவர்களுக்கு,\n\n"
+        f"{v_text} ஆகிய நான் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் "
+        f"மனப்பூர்வமாய் சம்மதித்து எழுதிக் கொடுத்த விவசாய நில "
+        f"சுத்த விக்கிரயப் பத்திரம் என்னவென்றால்,"
+    )
+    _body_para(doc, opening, space_before=8, space_after=6, first_line_indent=False)
+
+    # ── 4. VENDOR DECLARATION (section 4) ────────────────────────────────────
+    _body_para(doc, data.get("section_4_text", ""))
+
+    # ── 5. CONSIDERATION paragraph ────────────────────────────────────────────
+    total   = _blank(con.get("total_amount"))
+    words   = _blank(con.get("amount_in_words"))
+    advance = _blank(con.get("advance_amount", ""), "")
+    adv_dt  = _blank(con.get("advance_date", ""), "")
+    balance = _blank(con.get("balance_amount", ""), "")
+    bal_dt  = _blank(con.get("balance_date", ""), "")
+    pay_mode= _blank(con.get("payment_mode", ""), "")
+    txn_no  = _blank(con.get("transaction_no", ""), "")
+    txn_dt  = _blank(con.get("transaction_date", ""), "")
+    bank    = _blank(con.get("bank_name", ""), "")
+
+    con_text = (
+        f"இந்த விவசாய நிலத்தை விக்கிரயம் செய்வதற்கு நிர்ணயிக்கப்பட்ட "
+        f"மொத்த விலை ரூபாய் {total} (எழுத்தால்: {words} மட்டும்)."
+    )
+    if advance and not advance.startswith("_"):
+        con_text += f" இதில் முன்பணமாக ரூபாய் {advance}"
+        if adv_dt and not adv_dt.startswith("_"):
+            con_text += f" ({adv_dt} தேதி)"
+        con_text += " பெறப்பட்டது."
+    if balance and not balance.startswith("_"):
+        con_text += f" இருப்பு தொகை ரூபாய் {balance}"
+        if bal_dt and not bal_dt.startswith("_"):
+            con_text += f" ({bal_dt} தேதி)"
+        con_text += " பெறப்பட்டது."
+    if pay_mode and not pay_mode.startswith("_"):
+        con_text += f" செலுத்திய முறை: {pay_mode}."
+    if txn_no and not txn_no.startswith("_"):
+        con_text += f" Transaction எண். {txn_no}"
+        if txn_dt and not txn_dt.startswith("_"):
+            con_text += f" தேதி {txn_dt}"
+        if bank and not bank.startswith("_"):
+            con_text += f", {bank} வங்கி"
+        con_text += "."
+    _body_para(doc, con_text)
+
+    # ── 6. PROPERTY SCHEDULE ──────────────────────────────────────────────────
+    # "சொத்து விவரம்" — Bold label, 12pt
+    _body_para(doc, "சொத்து விவரம்", bold=True,
+               align=WD_ALIGN_PARAGRAPH.LEFT,
+               space_before=8, space_after=2, first_line_indent=False)
+
+    prop_parts = []
+    for label, key in [
+        ("ஜில்லா",           "district"),
+        ("தாலுக்கா",          "taluk"),
+        ("கிராமம்",           "village"),
+        ("வருவாய் கிராமம்",   "revenue_village"),
+        ("வட்டம்",            "vattam"),
+        ("சர்வே எண்",         "survey_no"),
+        ("உட்பிரிவு",          "subdivision"),
+        ("பட்டா எண்",          "patta_no"),
+        ("சிட்டா எண்",         "chitta_no"),
+        ("A-Register எண்",    "a_register_no"),
+        ("நில வகை",           "land_type"),
+        ("நஞ்சை/புஞ்சை",      "land_nature"),
+        ("நீர் ஆதாரம்",        "water_source"),
+    ]:
+        val = _blank(prop.get(key, ""), "")
+        if val and not val.startswith("_"):
+            prop_parts.append(f"{label}: {val}")
+
+    extent_acre = _blank(prop.get("extent_acre", ""), "")
+    extent_cent = _blank(prop.get("extent_cent", "0"), "0")
+    if extent_acre and not extent_acre.startswith("_"):
+        prop_parts.append(f"மொத்த பரப்பளவு: {extent_acre} ஏக்கர் {extent_cent} சென்ட்")
+
+    # boundaries
+    for label, key in [
+        ("கிழக்கு எல்லை", "boundary_east"),
+        ("மேற்கு எல்லை",  "boundary_west"),
+        ("வடக்கு எல்லை",  "boundary_north"),
+        ("தெற்கு எல்லை",  "boundary_south"),
+    ]:
+        val = _blank(prop.get(key, ""), "")
+        if val and not val.startswith("_"):
+            prop_parts.append(f"{label}: {val}")
+
+    for label, key in [
+        ("கட்டடங்கள்",        "buildings"),
+        ("மரங்கள்",            "trees"),
+        ("நீர் கட்டமைப்பு",    "water_structures"),
+    ]:
+        val = _blank(prop.get(key, ""), "")
+        if val and not val.startswith("_"):
+            prop_parts.append(f"{label}: {val}")
+
+    if prop_parts:
+        _body_para(doc, ", ".join(prop_parts) + ".",
+                   space_before=2, space_after=6, first_line_indent=False)
+
+    # ── 7. CHAIN OF TITLE ─────────────────────────────────────────────────────
+    chain = data.get("chain_of_title", [])
+    if chain and isinstance(chain, list):
+        chain_parts = []
+        for entry in chain:
+            if isinstance(entry, dict):
+                label  = entry.get("label", "")
+                owner  = _blank(entry.get("owner", ""))
+                doc_no = _blank(entry.get("doc_no", ""), "")
+                part   = f"{label}: {owner}"
+                if doc_no and not doc_no.startswith("_"):
+                    part += f" (ஆவண எண்: {doc_no})"
+                chain_parts.append(part)
+        if chain_parts:
+            _body_para(doc, "முந்தைய உரிமைத் தொடர் — " + "; ".join(chain_parts) + ".")
+
+    # ── 8. LEGAL CLAUSES ──────────────────────────────────────────────────────
+    legal = data.get("legal_clauses", {})
+    if isinstance(legal, dict):
+        for clause in legal.values():
+            _body_para(doc, clause)
+    elif isinstance(legal, list):
+        for clause in legal:
+            _body_para(doc, str(clause))
+
+    # ── 9. AGRICULTURE SPECIAL ────────────────────────────────────────────────
+    agri = data.get("agriculture_special", {})
+    prose_keys = ["land_nature_clause", "irrigation_clause", "fmb_clause", "adangal_clause"]
+    if isinstance(agri, dict):
+        for key in prose_keys:
+            _body_para(doc, agri.get(key, ""))
+        # standing crops / trees / farm structure — single sentence
+        detail_parts = []
+        for label, key in [
+            ("நிலத்தில் உள்ள பயிர்கள்", "standing_crops"),
+            ("மரங்கள் விவரம்",           "trees_detail"),
+            ("பண்ணை கட்டமைப்பு",         "farm_structure"),
+        ]:
+            val = _blank(agri.get(key, ""), "")
+            if val and not val.startswith("_"):
+                detail_parts.append(f"{label}: {val}")
+        if detail_parts:
+            _body_para(doc, ", ".join(detail_parts) + ".")
+    elif isinstance(agri, list):
+        for item in agri:
+            _body_para(doc, str(item))
+
+    # ── 10. POSSESSION & TRANSFER ─────────────────────────────────────────────
+    _body_para(doc, data.get("section_8_text", ""))
+
+    # ── 11. DOCUMENTS HANDED ──────────────────────────────────────────────────
+    docs = data.get("documents_handed", {})
+    doc_labels = {
+        "mother_deed":    "தாய் பத்திரம்",
+        "patta_copy":     "பட்டா நகல்",
+        "chitta_adangal": "சிட்டா / அடங்கல்",
+        "ec_copy":        "வில்லங்கச் சான்று (EC)",
+        "fmb_sketch":     "FMB Sketch",
+        "tax_receipts":   "வரி ரசீது",
+        "id_copies":      "அடையாள ஆவண நகல்கள்",
+        "other_docs":     "இதர ஆவணங்கள்",
+    }
+    handed_parts = []
+    if isinstance(docs, dict):
+        for key, label in doc_labels.items():
+            val = _blank(docs.get(key, ""), "")
+            if val and not val.startswith("_"):
+                handed_parts.append(f"{label}: {val}")
+    if handed_parts:
+        _body_para(doc, "ஒப்படைக்கப்பட்ட ஆவணங்கள் — " + ", ".join(handed_parts) + ".")
+    else:
+        _body_para(doc, "மேற்கண்ட சொத்திற்கான அனைத்து அசல் ஆவணங்களும் "
+                        "கொள்முதலாளரிடம் ஒப்படைக்கப்பட்டன.")
+
+    # ── 12. CLOSING TEXT ──────────────────────────────────────────────────────
+    _body_para(doc, data.get("closing_text", ""), space_before=8, space_after=8)
+
+    # ── 13. WITNESSES — line by line ──────────────────────────────────────────
     w1 = wit[0] if len(wit) > 0 else {}
     w2 = wit[1] if len(wit) > 1 else {}
 
     for idx, w in enumerate([w1, w2], start=1):
-        _heading_para(doc, f"சாட்சி {idx} (Witness {idx})", level=2)
-        _field_row(doc, "பெயர்",      _blank(w.get("name")))
-        _field_row(doc, "விலாசம்",    _blank(w.get("address")))
-        _field_row(doc, "கையொப்பம்",  "")
+        label   = w.get("label", f"சாட்சி {idx}")
+        name    = _blank(w.get("name"))
+        address = _blank(w.get("address"))
+        aadhaar = _blank(w.get("aadhaar", ""), "")
+        line    = f"{label} : {name}, {address}"
+        if aadhaar and not aadhaar.startswith("_"):
+            line += f", ஆதார்: {aadhaar}"
+        line += ",   கையொப்பம் : _______________"
+        _sig_para(doc, line)
 
-    doc.add_paragraph()
-    _heading_para(doc, "விற்பனையாளர் (VENDOR)", level=2)
-    _field_row(doc, "பெயர்",    _blank(v.get("name")))
-    _field_row(doc, "கையொப்பம் / கட்டை விரல் ரேகை", "")
+    _spacer(doc)
 
-    _heading_para(doc, "கொள்முதலாளர் (PURCHASER)", level=2)
-    _field_row(doc, "பெயர்",    _blank(p.get("name")))
-    _field_row(doc, "கையொப்பம் / கட்டை விரல் ரேகை", "")
+    # ── 14. VENDOR & PURCHASER SIGNATURES — two columns ───────────────────────
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.space_before = Pt(10)
+    p.paragraph_format.space_after  = Pt(2)
+    p.paragraph_format.first_line_indent = Cm(0)
+    v_name   = _blank(v.get("name"))
+    pur_name = _blank(pur.get("name"))
+    run = p.add_run(f"விற்பனையாளர் : {v_name}")
+    _apply_font(run, size_pt=BODY_SIZE)
+    tab = p.add_run("\t\t\t\t\t")
+    _apply_font(tab, size_pt=BODY_SIZE)
+    run2 = p.add_run(f"கொள்முதலாளர் : {pur_name}")
+    _apply_font(run2, size_pt=BODY_SIZE)
 
-    doc.add_paragraph()
-    disc = doc.add_paragraph(); disc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(disc.add_run(f"⚠  {data.get('disclaimer', '')}"), 10)
+    p2 = doc.add_paragraph()
+    p2.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p2.paragraph_format.space_before = Pt(2)
+    p2.paragraph_format.space_after  = Pt(2)
+    p2.paragraph_format.first_line_indent = Cm(0)
+    s1 = p2.add_run("கையொப்பம் / கட்டை விரல் ரேகை : _______________")
+    _apply_font(s1, size_pt=BODY_SIZE)
+    tab2 = p2.add_run("\t\t\t")
+    _apply_font(tab2, size_pt=BODY_SIZE)
+    s2 = p2.add_run("கையொப்பம் / கட்டை விரல் ரேகை : _______________")
+    _apply_font(s2, size_pt=BODY_SIZE)
+
+    # ── 15. REGISTRAR NOTE ────────────────────────────────────────────────────
+    reg_note = data.get("registrar_note", "")
+    if reg_note and not reg_note.startswith("{{"):
+        _spacer(doc)
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(16)
+        p.paragraph_format.space_after  = Pt(2)
+        p.paragraph_format.first_line_indent = Cm(0)
+        run = p.add_run(reg_note)
+        _apply_font(run, size_pt=BODY_SIZE)
+
+    # ── 16. DISCLAIMER ────────────────────────────────────────────────────────
+    disclaimer = data.get("disclaimer", "")
+    if disclaimer and not disclaimer.startswith("{{"):
+        _spacer(doc)
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(6)
+        p.paragraph_format.space_after  = Pt(4)
+        p.paragraph_format.first_line_indent = Cm(0)
+        run = p.add_run(f"⚠  {disclaimer}")
+        _apply_font(run, size_pt=BODY_SIZE)
 
     doc.save(str(output_path))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PLOT DOCX BUILDER
+#  PLOT DEED BUILDER
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _build_plot_docx(data: dict, output_path: Path):
     doc = Document()
-    for section in doc.sections:
-        section.top_margin    = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
-        section.left_margin   = Cm(3)
-        section.right_margin  = Cm(2)
 
-    hdr  = data.get("header", {})
-    v    = data.get("vendor", {})
-    p    = data.get("purchaser", {})
-    con  = data.get("consideration", {})
-    prop = data.get("property", {})
-    wit  = data.get("witnesses", [{}, {}])
+    for sec in doc.sections:
+        sec.top_margin    = Cm(2.5)
+        sec.bottom_margin = Cm(2.5)
+        sec.left_margin   = Cm(3.5)
+        sec.right_margin  = Cm(2.5)
 
-    # Title
-    t = doc.add_paragraph(); t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(t.add_run(data.get("title", "சுத்த விக்கிரையப் பத்திரம்")), 16, bold=True)
-    s = doc.add_paragraph(); s.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _set_tamil_font(s.add_run(data.get("subtitle", "ABSOLUTE SALE DEED — PLOT / VACANT LAND")), 13, bold=True)
-    doc.add_paragraph()
+    hdr   = data.get("header",        {})
+    v     = data.get("vendor",        {})
+    pur   = data.get("purchaser",     {})
+    con   = data.get("consideration", {})
+    prop  = data.get("property",      {})
+    wit   = data.get("witnesses",     [{}, {}])
 
-    _field_row(doc, "தேதி",
-               f"{_blank(hdr.get('date_day'))}ம் {_blank(hdr.get('date_month'))} மாதம் {_blank(hdr.get('date_year'))}ம் தேதி")
+    # ── 1. TITLE ──────────────────────────────────────────────────────────────
+    _title_para(doc, data.get("title", "சுத்த விக்கிரையப் பத்திரம்"))
+    _title_para(doc, data.get("subtitle", "ABSOLUTE SALE DEED — PLOT / VACANT LAND"))
+    _spacer(doc)
 
-    _heading_para(doc, "கொள்முதலாளர் (PURCHASER / BUYER) :")
-    for label, key in [("பெயர்", "name"), ("தந்தை பெயர்", "father_name"),
-                        ("வயது", "age"), ("விலாசம்", "address"),
-                        ("அடையாள அட்டை", "id_card"), ("கைபேசி எண்", "phone")]:
-        _field_row(doc, label, _blank(p.get(key)))
+    # ── 2. OPENING PARAGRAPH — Date + Purchaser + Vendor (ONE paragraph) ─────
+    date_day   = _blank(hdr.get("date_day"))
+    date_month = _blank(hdr.get("date_month"))
+    date_year  = _blank(hdr.get("date_year"))
 
-    _heading_para(doc, "விற்பனையாளர் (VENDOR / SELLER) :")
-    for label, key in [("பெயர்", "name"), ("தந்தை பெயர்", "father_name"),
-                        ("வயது", "age"), ("விலாசம்", "address"),
-                        ("அடையாள அட்டை", "id_card"), ("கைபேசி எண்", "phone")]:
-        _field_row(doc, label, _blank(v.get(key)))
+    date_str = f"{date_day}ம் {date_month} மாதம் {date_year}ம் தேதி"
+    date_str += ","
 
-    for clause_key in ["ownership_clause", "sale_clause", "possession_clause",
-                        "encumbrance_clause", "tax_clause", "patta_clause",
-                        "document_clause", "relinquish_clause", "closing_text"]:
-        doc.add_paragraph()
-        _body_para(doc, data.get(clause_key, ""))
+    pur_text = _party_text(pur, deed_type="plot")
+    v_text   = _party_text(v,   deed_type="plot")
 
-    # Property schedule
-    doc.add_paragraph()
-    _heading_para(doc, data.get("property_label", "சொத்து விவரம்"))
-    for label, key in [("கதவு எண் (Door No)", "door_no"), ("வார்டு எண் (Ward No)", "ward_no"),
-                        ("Plot எண்", "plot_no"), ("தெரு", "street"),
-                        ("பகுதி", "area"), ("தாலுக்கா", "taluk"),
-                        ("மாவட்டம்", "district"), ("மொத்த பரப்பு (Sq.ft)", "extent_sqft")]:
-        _field_row(doc, label, _blank(prop.get(key)))
+    opening = (
+        f"{date_str}\n\n"
+        f"{pur_text} அவர்களுக்கு,\n\n"
+        f"{v_text} ஆகிய நான் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் "
+        f"மனப்பூர்வமாய் சம்மதித்து எழுதிக் கொள்ளும் காலிமனை "
+        f"சுத்த விக்கிரையப் பத்திரம் என்னவென்றால்,"
+    )
+    _body_para(doc, opening, space_before=8, space_after=6, first_line_indent=False)
 
-    _heading_para(doc, "நான்கு எல்லைகள் (Four Boundaries)", level=2)
-    for direction, key in [("கிழக்கு (East)", "boundary_east"), ("மேற்கு (West)", "boundary_west"),
-                            ("வடக்கு (North)", "boundary_north"), ("தெற்கு (South)", "boundary_south")]:
-        _field_row(doc, direction, _blank(prop.get(key)))
+    # ── 3. ALL CLAUSES — each as its own justified paragraph ─────────────────
+    for key in [
+        "ownership_clause",
+        "sale_clause",
+        "possession_clause",
+        "encumbrance_clause",
+        "tax_clause",
+        "patta_clause",
+        "document_clause",
+        "relinquish_clause",
+    ]:
+        _body_para(doc, data.get(key, ""))
 
-    # Witnesses & Signatures
-    doc.add_paragraph()
-    _heading_para(doc, "சாட்சிகள் மற்றும் கையொப்பங்கள்")
+    # ── 4. CLOSING TEXT ───────────────────────────────────────────────────────
+    _body_para(doc, data.get("closing_text", ""), space_before=8, space_after=8)
+
+    # ── 5. PROPERTY SCHEDULE ──────────────────────────────────────────────────
+    # "சொத்து விவரம்" — Bold label, 12pt
+    _body_para(doc, "சொத்து விவரம்", bold=True,
+               align=WD_ALIGN_PARAGRAPH.LEFT,
+               space_before=6, space_after=2, first_line_indent=False)
+
+    prop_parts = []
+    for label, key in [
+        ("கதவு எண்", "door_no"),
+        ("வார்டு எண்", "ward_no"),
+        ("தொகுதி / Plot எண்", "plot_no"),
+        ("தெரு", "street"),
+        ("பகுதி", "area"),
+        ("தாலுக்கா", "taluk"),
+        ("மாவட்டம்", "district"),
+    ]:
+        val = _blank(prop.get(key, ""), "")
+        if val and not val.startswith("_"):
+            prop_parts.append(f"{label}: {val}")
+
+    extent = _blank(prop.get("extent_sqft", ""), "")
+    if extent and not extent.startswith("_"):
+        prop_parts.append(f"மொத்த பரப்பு: {extent} Sq.ft")
+
+    # boundaries
+    boundary_text = "எல்லைகள்"
+    boundary_parts = []
+    for label, key in [
+        ("கிழக்கு", "boundary_east"),
+        ("மேற்கு",  "boundary_west"),
+        ("வடக்கு",  "boundary_north"),
+        ("தெற்கு",  "boundary_south"),
+    ]:
+        val = _blank(prop.get(key, ""), "")
+        if val and not val.startswith("_"):
+            boundary_parts.append(f"{label}: {val}")
+    if boundary_parts:
+        prop_parts.append(boundary_text + " — " + ", ".join(boundary_parts))
+
+    if prop_parts:
+        _body_para(doc, ", ".join(prop_parts) + ".",
+                   space_before=2, space_after=6, first_line_indent=False)
+
+    # ── 6. WITNESSES — line by line ───────────────────────────────────────────
+    _spacer(doc)
     w1 = wit[0] if len(wit) > 0 else {}
     w2 = wit[1] if len(wit) > 1 else {}
 
     for idx, w in enumerate([w1, w2], start=1):
-        _heading_para(doc, f"சாட்சி {idx} (Witness {idx})", level=2)
-        _field_row(doc, "பெயர்",      _blank(w.get("name")))
-        _field_row(doc, "விலாசம்",    _blank(w.get("address")))
-        _field_row(doc, "கையொப்பம்",  "")
+        label   = w.get("label", f"சாட்சி {idx}")
+        name    = _blank(w.get("name"))
+        address = _blank(w.get("address"))
+        line    = f"{label} : {name}, {address},   கையொப்பம் : _______________"
+        _sig_para(doc, line)
 
-    doc.add_paragraph()
-    _heading_para(doc, "விற்பனையாளர் (VENDOR)", level=2)
-    _field_row(doc, "பெயர்",    _blank(v.get("name")))
-    _field_row(doc, "கையொப்பம் / கட்டை விரல் ரேகை", "")
+    _spacer(doc)
 
-    _heading_para(doc, "கொள்முதலாளர் (PURCHASER)", level=2)
-    _field_row(doc, "பெயர்",    _blank(p.get("name")))
-    _field_row(doc, "கையொப்பம் / கட்டை விரல் ரேகை", "")
+    # ── 7. VENDOR & PURCHASER SIGNATURES ─────────────────────────────────────
+    v_name   = _blank(v.get("name"))
+    pur_name = _blank(pur.get("name"))
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.space_before = Pt(10)
+    p.paragraph_format.space_after  = Pt(2)
+    p.paragraph_format.first_line_indent = Cm(0)
+    run = p.add_run(f"விற்பனையாளர் : {v_name}")
+    _apply_font(run, size_pt=BODY_SIZE)
+    tab = p.add_run("\t\t\t\t\t")
+    _apply_font(tab, size_pt=BODY_SIZE)
+    run2 = p.add_run(f"கொள்முதலாளர் : {pur_name}")
+    _apply_font(run2, size_pt=BODY_SIZE)
+
+    p2 = doc.add_paragraph()
+    p2.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p2.paragraph_format.space_before = Pt(2)
+    p2.paragraph_format.space_after  = Pt(2)
+    p2.paragraph_format.first_line_indent = Cm(0)
+    s1 = p2.add_run("கையொப்பம் / கட்டை விரல் ரேகை : _______________")
+    _apply_font(s1, size_pt=BODY_SIZE)
+    tab2 = p2.add_run("\t\t\t")
+    _apply_font(tab2, size_pt=BODY_SIZE)
+    s2 = p2.add_run("கையொப்பம் / கட்டை விரல் ரேகை : _______________")
+    _apply_font(s2, size_pt=BODY_SIZE)
+
+    # ── 8. LEGAL NOTES ────────────────────────────────────────────────────────
+    # (stored in skeleton under legal_notes if present)
+    legal_notes = data.get("legal_notes", "")
+    if legal_notes and not str(legal_notes).startswith("{{"):
+        _spacer(doc)
+        _body_para(doc, f"சட்ட குறிப்புகள் (Legal Notes) : {legal_notes}",
+                   space_before=10, space_after=4, first_line_indent=False)
 
     doc.save(str(output_path))
 
@@ -331,7 +702,7 @@ async def handle(arguments: dict) -> list[TextContent]:
                 "success":  True,
                 "file":     str(output_path),
                 "filename": filename,
-                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}"
+                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்."
             }, ensure_ascii=False, indent=2)
         )]
 

@@ -46,7 +46,7 @@ CRITICAL_FIELDS = {
         "DATE_DAY":           "பத்திர தேதி — நாள்",
         "DATE_MONTH":         "பத்திர தேதி — மாதம்",
         "DATE_YEAR":          "பத்திர தேதி — ஆண்டு",
-        "DATE_WORDS":         "தேதி எழுத்தில் (உதா: பத்தொன்பதாம் தேதி மே மாதம் இரண்டாயிரத்து இருபத்தாறு)",
+        # DATE_WORDS removed — generated automatically from DATE_DAY/MONTH/YEAR
 
         # ── Purchaser ─────────────────────────────────────────────────────────
         "PURCHASER_NAME":     "வாங்குபவர் பெயர்",
@@ -112,7 +112,7 @@ CRITICAL_FIELDS = {
         "DATE_DAY":           "பத்திர தேதி — நாள்",
         "DATE_MONTH":         "பத்திர தேதி — மாதம்",
         "DATE_YEAR":          "பத்திர தேதி — ஆண்டு",
-        "DATE_WORDS":         "தேதி எழுத்தில்",
+        # DATE_WORDS removed — generated automatically from DATE_DAY/MONTH/YEAR
         "REG_OFFICE":         "பதிவு அலுவலகம்",
         "DISTRICT":           "ஜில்லா",
         "TALUK":              "தாலுக்கா",

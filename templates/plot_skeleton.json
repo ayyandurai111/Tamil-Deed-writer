@@ -6,8 +6,7 @@
   "header": {
     "date_day":   "{{DATE_DAY}}",
     "date_month": "{{DATE_MONTH}}",
-    "date_year":  "{{DATE_YEAR}}",
-    "date_words": "{{DATE_WORDS}}"
+    "date_year":  "{{DATE_YEAR}}"
   },
 
   "purchaser": {
