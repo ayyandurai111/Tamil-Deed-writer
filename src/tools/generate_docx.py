@@ -1,7 +1,7 @@
 """
 tools/generate_docx.py
 ======================
-Tool 6 — generate_docx
+Tool 8 — generate_docx
 
 Professional Tamil Sale Deed layout:
 - Single uniform font: Latha 12pt throughout
@@ -686,7 +686,8 @@ async def handle(arguments: dict) -> list[TextContent]:
     deed_type       = filled_skeleton.get("type", "plot")
 
     timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_prefix = "".join(c if c.isalnum() or c == "_" else "_" for c in prefix)
+    safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
+    safe_prefix = safe_prefix.strip("_") or "deed"   # fall back if all chars were non-ASCII
     filename    = f"{safe_prefix}_{deed_type}_{timestamp}.docx"
     output_path = OUTPUT_DIR / filename
 

@@ -19,29 +19,30 @@ from mcp.types import Tool, TextContent
 
 def _find_blank_fields(filled_skeleton: dict) -> list[str]:
     """
-    Walk filled_skeleton and collect every key whose value is blank / empty.
-    These are fields the user did not provide.
+    Walk filled_skeleton and collect every leaf whose value is blank / empty.
+    Returns dotted-path keys (e.g. 'WITNESSES[0].AADHAAR') so Claude knows
+    exactly which field is blank, not just an ambiguous key name like 'AADHAAR'.
     """
     blank = []
 
-    def _walk(obj, parent_key=""):
+    def _walk(obj, path: str = ""):
         if isinstance(obj, str):
-            stripped = obj.strip()
-            if stripped == "" and parent_key:
-                blank.append(parent_key.upper())
+            if obj.strip() == "" and path:
+                blank.append(path.upper())
         elif isinstance(obj, dict):
             for k, v in obj.items():
-                _walk(v, k)
+                child_path = f"{path}.{k}" if path else k
+                _walk(v, child_path)
         elif isinstance(obj, list):
-            for item in obj:
-                _walk(item, parent_key)
+            for i, item in enumerate(obj):
+                _walk(item, f"{path}[{i}]")
 
     _walk(filled_skeleton)
     return sorted(set(blank))
 
 
-def _build_description(blank_fields: list[str]) -> str:
-    base = (
+def _build_description() -> str:
+    return (
         "[STEP 6 of 9] "
         "YOU (Claude) write the full Tamil legal deed draft from filled_skeleton. "
         "Then call this tool with your draft_text. "
@@ -59,22 +60,14 @@ def _build_description(blank_fields: list[str]) -> str:
         "(3) Every value from filled_skeleton MUST appear in the draft. "
         "(4) Do NOT invent values. Use only what is in filled_skeleton. "
         "(5) Language: Tamil prose. English only for proper nouns, numbers. "
-    )
 
-    if blank_fields:
-        fields_list = "\n".join(f"   • {f}" for f in blank_fields)
-        blank_rule = (
-            "BLANK FIELDS — user did not provide these: "
-            f"{fields_list} "
-            "RULE: For each blank field above, remove the entire phrase that contains it. "
-            "The remaining sentence must read as natural Tamil. "
-            "Do NOT write empty gaps. Do NOT invent values. Legal meaning must not change. "
-        )
-        base += blank_rule
-    else:
-        base += "All fields are filled — no blank cleanup needed. "
+        "BLANK FIELDS RULE: "
+        "This tool response will contain a 'blank_fields' list. "
+        "For each field in that list — remove the entire phrase containing it. "
+        "The remaining sentence must read as natural Tamil. "
+        "Do NOT write empty gaps. Do NOT invent values. Legal meaning must not change. "
+        "If blank_fields is empty — all fields are filled, no cleanup needed. "
 
-    base += (
         "After YOU write the full draft text, call this tool with: "
         "draft_text = your complete Tamil prose, "
         "filled_skeleton = the skeleton from Step 5, "
@@ -82,12 +75,10 @@ def _build_description(blank_fields: list[str]) -> str:
         "பயனருக்கு சொல்: Draft தயாரானது ✅ — review_draft-க்கு pass செய்கிறேன். "
     )
 
-    return base
-
 
 TOOL_DEFINITION = Tool(
     name="generate_draft",
-    description=_build_description([]),   # default — no blanks
+    description=_build_description(),
     inputSchema={
         "type": "object",
         "properties": {
@@ -128,20 +119,34 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     draft_id = f"draft_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
+    # Build blank fields instruction for Claude to act on
+    if blank_fields:
+        blank_instruction = (
+            f"BLANK FIELDS DETECTED {blank_fields} — "
+            "IMPORTANT: Rewrite draft_text now. "
+            "For each field in this list, remove the entire phrase containing it. "
+            "Remaining sentences must read as natural Tamil. "
+            "Do NOT leave empty gaps. Legal meaning must not change. "
+            "After rewriting, pass to review_draft."
+        )
+    else:
+        blank_instruction = "All fields filled — no cleanup needed. Pass to review_draft."
+
     return [TextContent(
         type="text",
         text=json.dumps({
-            "draft_id":       draft_id,
-            "deed_type":      deed_type,
-            "draft_text":     draft_text,
-            "blank_fields":   blank_fields,
-            "unfilled_count": unfilled_count,
-            "unfilled_tags":  unfilled_tags,
+            "draft_id":           draft_id,
+            "deed_type":          deed_type,
+            "draft_text":         draft_text,
+            "blank_fields":       blank_fields,
+            "blank_instruction":  blank_instruction,
+            "unfilled_count":     unfilled_count,
+            "unfilled_tags":      unfilled_tags,
             "message": (
                 f"✅ Draft received ({draft_id}). "
-                f"Blank fields detected: {blank_fields}. "
+                f"blank_fields: {blank_fields}. "
                 f"{unfilled_count} unfilled {{{{TAGS}}}} remaining. "
-                "Pass draft_text + filled_skeleton + deed_type to review_draft."
+                "Read blank_instruction and act on it before review_draft."
             )
         }, ensure_ascii=False, indent=2)
     )]

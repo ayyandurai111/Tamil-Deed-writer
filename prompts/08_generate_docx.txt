@@ -14,13 +14,15 @@ PRECONDITION — இது கட்டாயம்:
 Return பார்:
   success  = True / False
   filename — உருவாக்கப்பட்ட file பெயர்
-  file     — முழு path
 
 பயனருக்கு சொல் (success = True):
+  உடனே list_output_files tool call செய் — download link எடு.
+  பிறகு பயனருக்கு காட்டு:
+
   "✅ பத்திரம் தயாரானது!
 
   📄 கோப்பு பெயர்: [filename]
-  📁 சேமிக்கப்பட்ட இடம்: output/ folder
+  📥 Download: [download_url from list_output_files]
 
   [PAN/TDS notes இருந்தால் இங்கே காட்டு]
 

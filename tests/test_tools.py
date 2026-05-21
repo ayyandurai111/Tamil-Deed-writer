@@ -26,7 +26,7 @@ async def call(name: str, args: dict) -> dict:
 # ════════════════════════════════════════════════════════════════════
 async def run():
     print("=" * 60)
-    print("Tamil Deed MCP v3 — Full Tool Test")
+    print("Tamil Deed MCP v7 — Full Tool Test")
     print("=" * 60)
 
     # ── 1. detect_deed_type — Claude passes agriculture ───────────────
@@ -140,7 +140,7 @@ async def run():
     print("\n[9] resolve_date — DD/MM/YYYY")
     d = await call("resolve_date", {"user_input": "15/05/2026"})
     assert d["DATE_DAY"]   == "15",   f"FAIL: {d}"
-    assert d["DATE_MONTH"] == "05",   f"FAIL: {d}"
+    assert d["DATE_MONTH"] == "மே",   f"FAIL: {d}"
     assert d["DATE_YEAR"]  == "2026", f"FAIL: {d}"
     print(f"   ✅ {d['DATE_FULL']} ({d['DATE_MONTH_TAMIL']})")
 
@@ -162,7 +162,7 @@ async def run():
         "PURCHASER_ADDRESS": "34, வடக்கு தெரு, கும்பகோணம்",
         "PURCHASER_VILLAGE": "கும்பகோணம்", "PURCHASER_DISTRICT": "தஞ்சாவூர்",
         "PURCHASER_AADHAAR": "987654321098",
-        "DATE_DAY": "15", "DATE_MONTH": "05", "DATE_YEAR": "2026",
+        "DATE_DAY": "15", "DATE_MONTH": "மே", "DATE_YEAR": "2026",
         "REG_OFFICE": "பட்டுக்கோட்டை", "DISTRICT": "தஞ்சாவூர்",
         "TALUK": "பட்டுக்கோட்டை",     "STAMP_VALUE": "25000",
         "PROP_DISTRICT": "தஞ்சாவூர்", "PROP_TALUK": "பட்டுக்கோட்டை",
@@ -215,8 +215,8 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 சாட்சிகள்: வேலுசாமி, 5 ஆத்தூர் தெரு, பட்டுக்கோட்டை.
 அன்பழகன், 22 கோவில் தெரு, பட்டுக்கோட்டை.
 
-விற்பனையாளர் கையொப்பம்: _______________
-கொள்முதலாளர் கையொப்பம்: _______________
+விற்பனையாளர் கையொப்பம் / விரல் ரேகை: ராமசாமி
+கொள்முதலாளர் கையொப்பம் / விரல் ரேகை: முருகன்
 """
     d = await call("generate_draft", {
         "draft_text":     sample_draft,
@@ -225,7 +225,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
     })
     assert d["draft_text"] == sample_draft, "FAIL: draft_text not preserved"
     assert "draft_id" in d,                 "FAIL: no draft_id"
-    print(f"   ✅ draft_id={d['draft_id']}, unfilled_tags={d['unfilled_tags']}, blanks={d['blank_count']}")
+    print(f"   ✅ draft_id={d['draft_id']}, unfilled_tags={d['unfilled_tags']}, blank_fields={d['blank_fields']}")
 
     # ── 12. review_draft — L1 + L2 only, no L3 code ──────────────────
     print("\n[12] review_draft — clean draft should pass L1+L2")
@@ -278,7 +278,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         "VENDOR_ADDRESS": "12, தி.நகர், சென்னை 17",
         "VENDOR_ID": "ஆதார்: 1234 5678 9999, PAN: FGHIJ5678K",
         "VENDOR_PHONE": "9988776655",
-        "DATE_DAY": "15", "DATE_MONTH": "05", "DATE_YEAR": "2026",
+        "DATE_DAY": "15", "DATE_MONTH": "மே", "DATE_YEAR": "2026",
         "PROP_DISTRICT": "சென்னை",
         "PRIOR_PURCHASE_DATE": "10.03.2018",
         "PRIOR_REG_OFFICE": "அண்ணாநகர்",
@@ -370,8 +370,54 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         assert readonly != "MISSING", f"FAIL: {name} has no annotations.readOnlyHint"
         print(f"   ✅ {name:<22} readOnly={readonly}")
 
+    # ── 20. generate_draft blank_fields — dotted path (improvement) ───
+    print("\n[20] generate_draft blank_fields — dotted path format")
+    d = await call("generate_draft", {
+        "draft_text":      "test draft",
+        "filled_skeleton": {"vendor": {"name": "ராமன்", "aadhaar": ""}, "prop": {"area": ""}},
+        "deed_type":       "plot"
+    })
+    blanks = d["blank_fields"]
+    assert any("." in b for b in blanks), f"FAIL: expected dotted paths, got {blanks}"
+    assert any("AADHAAR" in b for b in blanks), f"FAIL: aadhaar not in blanks: {blanks}"
+    assert "AADHAAR" not in blanks, f"FAIL: bare 'AADHAAR' without path context: {blanks}"
+    print(f"   ✅ blank_fields use dotted paths: {blanks}")
+
+    # ── 21. generate_docx — Tamil filename_prefix falls back safely ───
+    print("\n[21] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
+    d2_tamil = await call("generate_docx", {
+        "filled_skeleton":  d2["filled_skeleton"],
+        "filename_prefix":  "ராமசாமி_முருகன்"    # Tamil chars
+    })
+    assert d2_tamil["success"], f"FAIL: {d2_tamil}"
+    fname = d2_tamil["filename"]
+    assert not fname.startswith("_"), f"FAIL: filename starts with underscore: {fname}"
+    assert "__" not in fname.replace(f"_{d2['filled_skeleton'].get('type','plot')}_", "X"), \
+        f"FAIL: consecutive underscores suggest bad sanitization: {fname}"
+    print(f"   ✅ Tamil prefix → safe filename: {fname}")
+
+    # ── 22. review_draft — ___ placeholders don't cause false Aadhaar errors
+    print("\n[22] review_draft — underscore blanks don't trigger false Aadhaar errors")
+    skeleton_with_blanks = {
+        "vendor":        {"aadhaar": "___________", "pan": "___________"},
+        "purchaser":     {"aadhaar": "___________", "pan": "___________"},
+        "header":        {"date_day": "15", "date_month": "மே", "date_year": "2026"},
+        "consideration": {"total_amount": "2500000"},
+        "property":      {}
+    }
+    d_rev = await call("review_draft", {
+        "draft_text":      "சுத்த விக்கிரயப் பத்திரம் — test draft text.",
+        "filled_skeleton": skeleton_with_blanks,
+        "deed_type":       "agriculture"
+    })
+    l2_errors = d_rev["layers"]["L2_legal"]["errors"]
+    aadhaar_errors = [e for e in l2_errors if "ஆதார்" in e.get("issue", "")]
+    assert len(aadhaar_errors) == 0, \
+        f"FAIL: ___ blanks triggered false Aadhaar error: {aadhaar_errors}"
+    print(f"   ✅ No false Aadhaar errors for blank (___ ) fields")
+
     print("\n" + "=" * 60)
-    print("✅ ALL 19 TESTS PASSED — MCP Server v3 Ready!")
+    print("✅ ALL 22 TESTS PASSED — MCP Server v7 Ready!")
     print("=" * 60)
 
 

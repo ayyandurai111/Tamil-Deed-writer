@@ -1,7 +1,7 @@
 """
 tools/list_output_files.py
 ==========================
-Tool 7 — list_output_files
+Tool 9 — list_output_files
 
 Lists all generated .docx files in the output folder with metadata
 and full download links.

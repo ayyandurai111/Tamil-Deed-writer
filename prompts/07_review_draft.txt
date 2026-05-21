@@ -7,43 +7,46 @@ STEP: 7 of 9
   filled_skeleton = Step 5 result
   deed_type       = Step 1 result
 
-4 Layers என்ன செய்யும்:
-  L1 Placeholders — {{TAG}} unfilled regex check
-  L2 Legal        — Aadhaar 12 digits, PAN format, Date valid, 4 boundaries
-  L3 Consistency  — District match, Age ≥ 18, Amount vs words
-  L4 Tamil Grammar — Claude AI grammar + legal terms check
+TOOL செய்வது (L1 + L2 — programmatic):
+  L1 — Placeholders : {{TAG}} + blank ___ உள்ளதா
+  L2 — Legal        : Aadhaar 12 digits, PAN format, Date, 4 boundaries
 
-Return பார்:
-  ready_for_docx   = True / False
-  critical_count   — DOCX block செய்யும் errors
-  warning_count    — DOCX allow ஆனாலும் காட்ட வேண்டும்
-  summary          — Tamil summary message
-  layers           — per-layer details
+══════════════════════════════════════
+Tool return பிறகு — YOU (Claude) செய்:
+══════════════════════════════════════
 
-CASE A — ready_for_docx = True, warning_count = 0:
+LAYER 3 — Consistency மட்டும் (வேறு எதுவும் பார்க்காதே):
+  ✅ மாவட்டம் / ஊர் பெயர் consistent-ஆக உள்ளதா?
+  ✅ AMOUNT_WORDS எண்ணுடன் பொருந்துகிறதா?
+  ✅ Vendor / Purchaser பெயர்கள் draft முழுவதும் ஒரே மாதிரி?
+  ✅ Vendor prefix (திரு/திருமதி) gender சரியா?
+  → L3 முடிந்த பிறகு மட்டும் L4-க்கு செல்.
+
+LAYER 4 — Tamil Grammar மட்டும் (வேறு எதுவும் பார்க்காதே):
+  ✅ Legal Tamil prose இயல்பாக உள்ளதா?
+  ✅ Blank gaps / தனி comma / தனி space உள்ளதா?
+  ✅ Sentence முடிவு சரியாக உள்ளதா?
+  ✅ Duplicate phrase உள்ளதா?
+  → L4 முடிந்த பிறகு மட்டும் final decision எடு.
+
+══════════════════════════════════════
+FINAL DECISION:
+══════════════════════════════════════
+
+CASE A — L1+L2 critical=0, L3 pass, L4 pass:
   "✅ சரிபார்ப்பு முடிந்தது — பத்திரம் தயாரிக்கிறேன்!"
   → generate_docx செல்.
 
-CASE B — ready_for_docx = True, warning_count > 0:
-  எச்சரிக்கைகளை காட்டு:
+CASE B — L3 அல்லது L4 issues:
   "⚠️ சிறு குறிப்புகள்:
-   1. [warning 1]
-   2. [warning 2]
-  பத்திரம் தயாரிக்கிறேன்."
-  → generate_docx செல்.
+   L3: [issue]
+   L4: [issue]
+  தொடரட்டுமா?"
+  → பயனர் confirm → generate_docx செல்.
 
-CASE C — ready_for_docx = False:
-  Critical errors-ஐ காட்டு:
+CASE C — L1 அல்லது L2 critical > 0:
   "❌ சரிபார்ப்பில் திருத்தங்கள் தேவை:
-
-  🔴 Critical:
-  1. [error 1 issue]
-  2. [error 2 issue]
-
-  ⚠️ Warnings:
-  1. [warning issue]
-
+   🔴 [critical errors]
   திருத்தங்களை கொடுத்தால் மீண்டும் சரிபார்க்கிறேன்."
-
-  பிறகு: fill_skeleton → generate_draft → review_draft LOOP.
+  → fill_skeleton → generate_draft → review_draft LOOP.
   ❌ generate_docx call செய்யாதே.

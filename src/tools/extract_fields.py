@@ -13,7 +13,7 @@ FIX: All keys normalized to UPPERCASE before storing,
 
 import json
 from mcp.types import Tool, TextContent
-from constants import CRITICAL_FIELDS
+from constants import CRITICAL_FIELDS, TAMIL_MONTHS
 
 TOOL_DEFINITION = Tool(
     name="extract_fields",
@@ -31,6 +31,9 @@ TOOL_DEFINITION = Tool(
         "(1) Vendor = விற்பவர் / seller / grantor. "
         "(2) Purchaser = வாங்குபவர் / buyer / grantee. "
         "(3) DATE_DAY / DATE_MONTH / DATE_YEAR — split the date into three parts. "
+        "    DATE_MONTH must always be Tamil name: ஜனவரி பிப்ரவரி மார்ச் ஏப்ரல் மே ஜூன் ஜூலை ஆகஸ்ட் செப்டம்பர் அக்டோபர் நவம்பர் டிசம்பர். "
+        "    உதாரணம்: '14/05/2026' → DATE_MONTH='மே', '14 May 2026' → DATE_MONTH='மே'. "
+        "    (If you pass a number or English name, _fixup will auto-convert — but prefer Tamil directly.) "
         "(4) AADHAAR — 12 digits only, strip spaces and dashes. "
         "(5) TOTAL_AMOUNT — digits only, strip commas. "
         "(6) NANJAI_OR_PUNJAI — use exact Tamil word found in text. "
@@ -90,6 +93,44 @@ def _normalize(fields: dict) -> dict:
     return out
 
 
+def _fixup(fields: dict) -> dict:
+    """Post-normalize corrections applied once after merging."""
+
+    # Fix 1 — DATE_MONTH: any format → Tamil name
+    # User may give: "05" / "5" (number), "May" (English), "மே" (Tamil already correct)
+    _EN_TO_NUM = {
+        "january":1,  "jan":1,  "february":2, "feb":2,
+        "march":3,    "mar":3,  "april":4,    "apr":4,
+        "may":5,      "june":6, "jun":6,      "july":7,
+        "jul":7,      "august":8,"aug":8,     "september":9,
+        "sep":9,      "sept":9, "october":10, "oct":10,
+        "november":11,"nov":11, "december":12,"dec":12,
+    }
+    month_val = fields.get("DATE_MONTH")
+    if month_val:
+        mv = str(month_val).strip()
+        if mv.isdigit():
+            # "05" or "5" → Tamil name
+            tamil_name = TAMIL_MONTHS.get(int(mv))
+            if tamil_name:
+                fields["DATE_MONTH"] = tamil_name
+        elif mv.lower() in _EN_TO_NUM:
+            # "May" or "may" → Tamil name
+            tamil_name = TAMIL_MONTHS.get(_EN_TO_NUM[mv.lower()])
+            if tamil_name:
+                fields["DATE_MONTH"] = tamil_name
+        # Already Tamil ("மே") → unchanged ✅
+
+    # Fix 2 — AMOUNT_WORDS: strip trailing "மட்டும்" to avoid duplicate
+    # Template already ends with "மட்டும்" — user or Claude may append one too
+    for key in ("AMOUNT_WORDS", "RECEIVED_WORDS", "ADVANCE_WORDS", "BALANCE_WORDS"):
+        val = fields.get(key)
+        if val and str(val).strip().endswith("மட்டும்"):
+            fields[key] = str(val).strip()[:-len("மட்டும்")].strip()
+
+    return fields
+
+
 async def handle(arguments: dict) -> list[TextContent]:
     deed_type        = arguments.get("deed_type", "plot")
     extracted_fields = arguments.get("extracted_fields") or {}
@@ -108,6 +149,9 @@ async def handle(arguments: dict) -> list[TextContent]:
     # Ensure every critical field key is present (None if never found)
     for key in CRITICAL_FIELDS.get(deed_type, {}):
         merged.setdefault(key.upper(), None)
+
+    # Apply post-normalize corrections
+    merged = _fixup(merged)
 
     found   = [k for k, v in merged.items() if v is not None]
     missing = [k for k, v in merged.items() if v is None]

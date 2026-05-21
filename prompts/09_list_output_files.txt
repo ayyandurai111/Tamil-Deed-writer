@@ -1,18 +1,29 @@
 TOOL: list_output_files
-STEP: Optional (user request-ஆக மட்டும்)
+STEP: Auto (generate_docx success பிறகு) + Optional (user request)
 ══════════════════════════════════════
 
 எப்போது call செய்:
-  பயனர் "என்ன files உருவாக்கப்பட்டன?", "கோப்புகளை காட்டு",
-  "list files" என்று கேட்டால் மட்டும்.
+  1. generate_docx success=True — உடனே தானாக call செய் (download link-க்கு)
+  2. பயனர் "என்ன files?", "கோப்புகளை காட்டு", "list files" என்று கேட்டால்
 
 Return பார்:
-  files       — filename, path, size_kb, created list
-  total_files — மொத்த count
+  files[]
+    filename     — கோப்பு பெயர்
+    size_kb      — கோப்பு அளவு
+    created      — உருவாக்கிய நேரம்
+    download_url — முழு https download link
 
-பயனருக்கு காட்டு:
+பயனருக்கு காட்டு (generate_docx பிறகு auto call):
+  📥 Download: [download_url]  ← இதை மட்டும் காட்டு
+
+பயனருக்கு காட்டு (user request):
   "📁 உருவாக்கப்பட்ட பத்திரங்கள் ([total_files] கோப்புகள்):
 
   1. [filename] — [size_kb] KB — [created]
+     📥 Download: [download_url]
+
   2. [filename] — [size_kb] KB — [created]
-  ..."
+     📥 Download: [download_url]"
+
+files காலியாக இருந்தால்:
+  "📁 இன்னும் எந்த பத்திரமும் உருவாக்கப்படவில்லை."

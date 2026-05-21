@@ -1,7 +1,7 @@
 """
 tools/review_draft.py
 =====================
-Tool 7 — review_draft
+Tool 8 — review_draft  (Step 7 of 9 in workflow)
 
 3-layer review of the Tamil deed draft before DOCX generation.
 
@@ -40,25 +40,35 @@ from mcp.types import Tool, TextContent
 TOOL_DEFINITION = Tool(
     name="review_draft",
     description=(
-        "[STEP 7 of 9] Draft-ஐ 2 layers-இல் சரிபார். "
+        "[STEP 7 of 9] Draft-ஐ 4 தனி layers-இல் சரிபார். "
+        "ஒவ்வொரு layer-உம் தனி focus — ஒரே நேரத்தில் எல்லாம் செய்யாதே. "
 
-        "L1 Placeholders: {{TAG}} unfilled இருக்கிறதா. "
-        "L2 Legal: Aadhaar 12 digits, PAN format, Date valid, 4 boundaries உள்ளனவா. "
+        "── TOOL செய்வது (L1 + L2) ──────────────────── "
+        "இந்த tool L1 + L2 programmatic check செய்து return ஆகும். "
 
-        "Tool return ஆன பிறகு — YOU (Claude) Layer 3 செய்: "
-        "draft_text-ஐ படித்து கீழ்கண்டவற்றை சரிபார்: "
-        "(a) விற்பவர் prefix (திரு/திருமதி) gender-உடன் பொருந்துகிறதா? "
-        "(b) 4 எல்லைகளும் வெவ்வேறு விவரம் உள்ளனவா (நான்கும் ஒரே விஷயமா)? "
-        "(c) AMOUNT_WORDS எண்ணுடன் பொருந்துகிறதா? "
-        "(d) Party பெயர்கள் draft முழுவதும் consistent-ஆக உள்ளனவா? "
-        "(e) ஏதேனும் Tamil grammar பிழை தெரிகிறதா? "
-        "Claude issues காண்பித்தால் பயனரிடம் confirm கேள். "
+        "── YOU (Claude) செய்வது — தனி தனியாக ──────── "
 
-        "ready_for_docx=True + no L3 issues → generate_docx செல். "
-        "ready_for_docx=True + L3 issues → பயனரிடம் காட்டி confirm கேள், பிறகு generate_docx. "
-        "ready_for_docx=False → ❌ Critical errors காட்டு, திருத்தம் கேள். "
+        "LAYER 3 — Consistency (tool return பிறகு முதலில் இதை மட்டும் செய்): "
+        "draft_text-ஐ படித்து கீழ்கண்டவற்றை மட்டும் சரிபார்: "
+        "(a) மாவட்டம் / ஊர் பெயர் draft முழுவதும் consistent-ஆக உள்ளதா? "
+        "(b) AMOUNT_WORDS எண்ணுடன் பொருந்துகிறதா? "
+        "(c) Party பெயர்கள் (Vendor/Purchaser) draft முழுவதும் ஒரே மாதிரி உள்ளதா? "
+        "(d) Vendor prefix (திரு/திருமதி) gender-உடன் பொருந்துகிறதா? "
+        "L3 முடிந்த பிறகு மட்டும் L4-க்கு செல். "
+
+        "LAYER 4 — Tamil Grammar (L3 முடிந்த பிறகு இதை மட்டும் செய்): "
+        "draft_text-ஐ படித்து கீழ்கண்டவற்றை மட்டும் சரிபார்: "
+        "(a) Legal Tamil prose இயல்பாக உள்ளதா? "
+        "(b) Blank gaps (extra space, comma தனியாக) உள்ளதா? "
+        "(c) Sentence முடிவு சரியாக உள்ளதா? "
+        "(d) ஒரே phrase இரண்டு முறை வருகிறதா (duplicate)? "
+        "L4 முடிந்த பிறகு மட்டும் final decision எடு. "
+
+        "── FINAL DECISION ───────────────────────────── "
+        "L1+L2 critical=0, L3 pass, L4 pass → generate_docx செல். "
+        "L3 அல்லது L4 issues → பயனரிடம் காட்டி confirm கேள், பிறகு generate_docx. "
+        "L1 அல்லது L2 critical > 0 → ❌ திருத்தம் கேள், generate_docx call செய்யாதே. "
         "fill_skeleton → generate_draft → review_draft LOOP. "
-        "❌ ready_for_docx=False-ஆக இருந்தால் generate_docx call செய்யாதே."
     ),
     inputSchema={
         "type": "object",
@@ -92,7 +102,7 @@ TOOL_DEFINITION = Tool(
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _layer1_placeholders(draft_text: str) -> dict:
-    """Find any {{PLACEHOLDER}} tags still present in the draft."""
+    """Find any {{PLACEHOLDER}} tags or blank underscores still present in the draft."""
     found  = re.findall(r"\{\{([A-Z_]+)\}\}", draft_text)
     unique = sorted(set(found))
 
@@ -105,6 +115,15 @@ def _layer1_placeholders(draft_text: str) -> dict:
         for tag in unique
     ]
 
+    # Detect blank lines like "3வது உரிமையாளர்: ___________"
+    blank_lines = re.findall(r"[^:\n]+:\s*_{3,}", draft_text)
+    for line in blank_lines:
+        errors.append({
+            "field":    line.strip(),
+            "issue":    f"Blank line கண்டுபிடிக்கப்பட்டது: '{line.strip()}' — இந்த phrase-ஐ முழுதாக நீக்கவும்",
+            "severity": "critical"
+        })
+
     return {
         "passed": len(errors) == 0,
         "errors": errors
@@ -116,8 +135,8 @@ def _layer1_placeholders(draft_text: str) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _check_aadhaar(val: str, label: str) -> dict | None:
-    if not val or val == "___":
-        return None   # already caught by layer 1
+    if not val or re.match(r"^_+$", str(val)) or str(val).startswith("{{"):
+        return None   # missing/unfilled — already caught by layer 1
     digits = re.sub(r"[^0-9]", "", str(val))
     if len(digits) != 12:
         return {
@@ -131,7 +150,10 @@ def _check_aadhaar(val: str, label: str) -> dict | None:
 def _check_pan(val: str, label: str) -> dict | None:
     if not val or val in ("___", "பொருந்தாது", "—") or str(val).startswith("{{"):
         return None
-    if not re.fullmatch(r"[A-Z]{5}[0-9]{4}[A-Z]", str(val).strip().upper()):
+    # Accept exact PAN (agriculture) OR PAN embedded in id_card string (plot)
+    pan_pattern = r"[A-Z]{5}[0-9]{4}[A-Z]"
+    val_upper = str(val).strip().upper()
+    if not re.search(pan_pattern, val_upper):
         return {
             "field":    label,
             "issue":    f"{label}: PAN format தவறு — 5 எழுத்து + 4 எண் + 1 எழுத்து (ABCDE1234F)",
@@ -141,7 +163,7 @@ def _check_pan(val: str, label: str) -> dict | None:
 
 
 def _check_amount(val: str) -> dict | None:
-    if not val or val == "___":
+    if not val or re.match(r"^_+$", str(val)) or str(val).startswith("{{"):
         return None
     digits = re.sub(r"[^0-9]", "", str(val))
     if not digits or int(digits) <= 0:
@@ -154,8 +176,21 @@ def _check_amount(val: str) -> dict | None:
 
 
 def _check_date(day: str, month: str, year: str) -> dict | None:
+    from constants import TAMIL_MONTHS
+    # Build reverse map: "மே" → 5
+    _TAMIL_TO_NUM = {v: k for k, v in TAMIL_MONTHS.items()}
+
+    # Resolve month — Tamil name or number
+    month_num = None
+    if str(month).isdigit():
+        month_num = int(month)
+    else:
+        month_num = _TAMIL_TO_NUM.get(str(month).strip())
+
     try:
-        d     = date(int(year), int(month), int(day))
+        if not month_num:
+            raise ValueError(f"Unknown month: {month}")
+        d     = date(int(year), month_num, int(day))
         today = date.today()
         if d > today:
             return {
@@ -202,13 +237,21 @@ def _layer2_legal(filled: dict, deed_type: str) -> dict:
                     "severity": "critical"
                 })
 
-    # PAN
-    for err in [
-        _check_pan(v.get("pan"), "விற்பவர் PAN"),
-        _check_pan(p.get("pan"), "வாங்குபவர் PAN"),
-    ]:
-        if err:
-            errors.append(err)
+    # PAN — agriculture uses separate 'pan' field; plot uses 'id_card' (combined Aadhaar+PAN)
+    if deed_type == "agriculture":
+        for err in [
+            _check_pan(v.get("pan"), "விற்பவர் PAN"),
+            _check_pan(p.get("pan"), "வாங்குபவர் PAN"),
+        ]:
+            if err:
+                errors.append(err)
+    else:
+        # Plot deed: PAN is embedded inside id_card (e.g. "ஆதார்: 1234 5678 9012, PAN: ABCDE1234F")
+        for party_label, party in [("விற்பவர்", v), ("வாங்குபவர்", p)]:
+            id_val = str(party.get("id_card", "") or "")
+            err = _check_pan(id_val, f"{party_label} PAN (id_card-இல்)")
+            if err:
+                errors.append(err)
 
     # Amount
     err = _check_amount(con.get("total_amount"))

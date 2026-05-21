@@ -13,9 +13,9 @@ Resolves the deed date from user input.
 
 Returns:
   DATE_DAY         : "18"
-  DATE_MONTH       : "05"
+  DATE_MONTH       : "மே"          ← Tamil name (not a number)
   DATE_YEAR        : "2026"
-  DATE_MONTH_TAMIL : "மே"
+  DATE_MONTH_TAMIL : "மே"          ← same as DATE_MONTH (kept for compatibility)
   DATE_FULL        : "18/05/2026"
   source           : "today_default" | "user_provided"
   message          : Tamil message explaining what was used
@@ -29,6 +29,7 @@ import json
 import re
 from datetime import date, datetime, timedelta
 from mcp.types import Tool, TextContent
+from constants import TAMIL_MONTHS
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
@@ -37,8 +38,8 @@ TOOL_DEFINITION = Tool(
         "[STEP 3b of 9] பத்திர தேதியை resolve செய். "
         "பயனர் date கொடுத்தால்: user_input = அந்த text ('today','இன்று','15/05/2026','மே 15 2026'). "
         "பயனர் date கொடுக்கவில்லை: user_input = '' → இன்றைய தேதி தானாக பயன்படும். "
-        "Return: DATE_DAY, DATE_MONTH, DATE_YEAR, DATE_MONTH_TAMIL, DATE_FULL, source. "
-        "இந்த 5 fields-ஐ existing fields dict-இல் merge செய். "
+        "Return: DATE_DAY, DATE_MONTH (Tamil name — மே/ஜூன் etc.), DATE_YEAR, DATE_MONTH_TAMIL, DATE_FULL, source. "
+        "இந்த fields-ஐ existing fields dict-இல் merge செய். "
         "source='today_default': பயனருக்கு சொல் — தேதி கொடுக்கவில்லை, இன்று [DATE_FULL] பயன்படுகிறது. "
         "source='user_provided': silent — சொல்ல வேண்டாம். "
         "ALWAYS call this — date இல்லாவிட்டாலும் skip செய்யாதே."
@@ -67,22 +68,6 @@ TOOL_DEFINITION = Tool(
         "idempotentHint": False,   # "today" changes every day
     }
 )
-
-# ── Tamil month names (Gregorian months in Tamil) ─────────────────────────────
-TAMIL_MONTHS = {
-    1:  "ஜனவரி",
-    2:  "பிப்ரவரி",
-    3:  "மார்ச்",
-    4:  "ஏப்ரல்",
-    5:  "மே",
-    6:  "ஜூன்",
-    7:  "ஜூலை",
-    8:  "ஆகஸ்ட்",
-    9:  "செப்டம்பர்",
-    10: "அக்டோபர்",
-    11: "நவம்பர்",
-    12: "டிசம்பர்",
-}
 
 # English month name → month number (for "May 15 2026" style input)
 _EN_MONTH_MAP = {
@@ -134,9 +119,9 @@ def _build_result(d: date, source: str, message: str) -> dict:
     """Build the standard return dict from a date object."""
     return {
         "DATE_DAY":         str(d.day),
-        "DATE_MONTH":       f"{d.month:02d}",
+        "DATE_MONTH":       TAMIL_MONTHS[d.month],   # "மே" not "05"
         "DATE_YEAR":        str(d.year),
-        "DATE_MONTH_TAMIL": TAMIL_MONTHS[d.month],
+        "DATE_MONTH_TAMIL": TAMIL_MONTHS[d.month],   # same — kept for compatibility
         "DATE_FULL":        f"{d.day:02d}/{d.month:02d}/{d.year}",
         "source":           source,
         "message":          message,
