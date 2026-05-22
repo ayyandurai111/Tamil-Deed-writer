@@ -44,21 +44,10 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     file_list = []
     for f in files:
-        stat = f.stat()
         download_url = f"{BASE_URL.rstrip('/')}/download/{f.name}"
-        file_list.append({
-            "filename":     f.name,
-            "size_kb":      round(stat.st_size / 1024, 1),
-            "created":      datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
-            "download_url": download_url,
-        })
+        file_list.append(download_url)
 
     return [TextContent(
         type="text",
-        text=json.dumps({
-            "files":       file_list,
-            "total_files": len(file_list),
-            "output_dir":  str(OUTPUT_DIR),
-            "message":     f"📁 {len(file_list)} பத்திரங்கள் கண்டுபிடிக்கப்பட்டன.",
-        }, ensure_ascii=False, indent=2)
+        text=json.dumps(file_list, ensure_ascii=False, indent=2)
     )]
