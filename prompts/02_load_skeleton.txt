@@ -1,14 +1,12 @@
 TOOL: load_skeleton
-STEP: 2 of 9
+STEP: CALL 2 of 12
 ══════════════════════════════════════
 
+ONE TASK: load_skeleton tool call மட்டும்.
+
 என்ன செய்:
-  deed_type (Step 1-இல் இருந்து) pass செய்.
+  deed_type = CALL 1 detect_deed_type result
 
-Return பார்:
-  skeleton JSON — {{PLACEHOLDER}} fields கொண்ட template.
+tool call செய். முடிந்தது.
 
-Next step:
-  skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை.
-
-பயனருக்கு சொல்ல வேண்டாம் — silent step.
+⚠️ tool call மட்டும் — அடுத்த call: extract_fields (CALL 3).

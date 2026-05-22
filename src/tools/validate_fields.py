@@ -21,13 +21,15 @@ from constants import CRITICAL_FIELDS, PAN_THRESHOLD, TDS_THRESHOLD
 TOOL_DEFINITION = Tool(
     name="validate_fields",
     description=(
-        "[STEP 4 of 9] collect ஆன fields-ஐ legal requirements-க்கு எதிராக சரிபார். "
-        "deed_type = Step 1 result. fields = extract_fields + resolve_date merge ஆன dict. "
-        "can_generate=True → Step 5 fill_skeleton செல். "
-        "can_generate=False → பயனரிடம் Tamil-இல் கேள்: "
-        "'பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை: 1.[field]? 2.[field]? ...'. "
-        "பயனர் reply → extract_fields (existing_fields pass) → resolve_date → validate_fields LOOP. "
-        "pan_tds_notes இருந்தால் பயனருக்கு காட்டு — block செய்யாதே."
+        "[CALL 5 of 12] ONE TASK: இந்த tool call மட்டும். "
+        "deed_type = CALL 1 result. fields = extract_fields result (resolve_date merge ஆனது இருந்தால் அதுவும் சேர்). "
+        "tool call முடிந்தவுடன் response முடிந்தது. can_generate=True → NEXT CALL: fill_skeleton. "
+        "can_generate=False → NEXT CALL (தனி response): missing fields மட்டும் கேள் — tool call அல்ல. "
+        "'பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை: 1.[field]? 2.[field]? ...' "
+        "பயனர் reply வந்த பிறகு: extract_fields CALL (existing_fields pass) → validate_fields CALL LOOP. "
+        "pan_block=True → can_generate எப்போதும் False — PAN எண் கேள், fill_skeleton செல்லாதே — HARD BLOCK. "
+        "tds_required=True மட்டும் (pan_block=False) → TDS note காட்டு, block இல்லை — proceed செய். "
+        "pan_tds_notes-ஐ காட்டுவது advisory மட்டும் — pan_block=True-ஐ override செய்யாது."
     ),
     inputSchema={
         "type": "object",
@@ -110,11 +112,16 @@ def run_validation(deed_type: str, fields: dict) -> dict:
     if tds_needed:
         notes.append("⚠️ தொகை ₹50 லட்சத்திற்கு மேல் — வாங்குபவர் 1% TDS பிடிக்க வேண்டும் (IT S.194-IA)")
 
+    pan_fields_missing = any("PAN" in k for k in missing)
+
     return {
         "missing_critical": missing,
         "missing_count":    len(missing),
         "pan_required":     pan_needed,
         "tds_required":     tds_needed,
+        # BUG 3 FIX: explicit pan_block flag so Claude cannot confuse
+        # "show pan_tds_notes" advisory with "PAN field is still missing".
+        "pan_block":        pan_needed and pan_fields_missing,
         "can_generate":     len(missing) == 0,
         "pan_tds_notes":    notes
     }

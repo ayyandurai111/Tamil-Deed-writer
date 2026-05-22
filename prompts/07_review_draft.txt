@@ -1,52 +1,9 @@
-TOOL: review_draft
-STEP: 7 of 9
-══════════════════════════════════════
+⚠️ இந்த file v8-வரை பயன்படுத்தப்பட்டது.
+v9-இல் இது 4 தனி calls-ஆக பிரிக்கப்பட்டது:
 
-என்ன செய்:
-  draft_text      = Step 6 generate_draft result
-  filled_skeleton = Step 5 result
-  deed_type       = Step 1 result
+  07a_review_L1L2.txt   → CALL 7  (tool call மட்டும்)
+  07b_review_L3.txt     → CALL 8  (L3 consistency மட்டும்)
+  07c_review_L4.txt     → CALL 9  (L4 grammar மட்டும்)
+  07d_review_decision.txt → CALL 10 (final decision மட்டும்)
 
-TOOL செய்வது (L1 + L2 — programmatic):
-  L1 — Placeholders : {{TAG}} + blank ___ உள்ளதா
-  L2 — Legal        : Aadhaar 12 digits, PAN format, Date, 4 boundaries
-
-══════════════════════════════════════
-Tool return பிறகு — YOU (Claude) செய்:
-══════════════════════════════════════
-
-LAYER 3 — Consistency மட்டும் (வேறு எதுவும் பார்க்காதே):
-  ✅ மாவட்டம் / ஊர் பெயர் consistent-ஆக உள்ளதா?
-  ✅ AMOUNT_WORDS எண்ணுடன் பொருந்துகிறதா?
-  ✅ Vendor / Purchaser பெயர்கள் draft முழுவதும் ஒரே மாதிரி?
-  ✅ Vendor prefix (திரு/திருமதி) gender சரியா?
-  → L3 முடிந்த பிறகு மட்டும் L4-க்கு செல்.
-
-LAYER 4 — Tamil Grammar மட்டும் (வேறு எதுவும் பார்க்காதே):
-  ✅ Legal Tamil prose இயல்பாக உள்ளதா?
-  ✅ Blank gaps / தனி comma / தனி space உள்ளதா?
-  ✅ Sentence முடிவு சரியாக உள்ளதா?
-  ✅ Duplicate phrase உள்ளதா?
-  → L4 முடிந்த பிறகு மட்டும் final decision எடு.
-
-══════════════════════════════════════
-FINAL DECISION:
-══════════════════════════════════════
-
-CASE A — L1+L2 critical=0, L3 pass, L4 pass:
-  "✅ சரிபார்ப்பு முடிந்தது — பத்திரம் தயாரிக்கிறேன்!"
-  → generate_docx செல்.
-
-CASE B — L3 அல்லது L4 issues:
-  "⚠️ சிறு குறிப்புகள்:
-   L3: [issue]
-   L4: [issue]
-  தொடரட்டுமா?"
-  → பயனர் confirm → generate_docx செல்.
-
-CASE C — L1 அல்லது L2 critical > 0:
-  "❌ சரிபார்ப்பில் திருத்தங்கள் தேவை:
-   🔴 [critical errors]
-  திருத்தங்களை கொடுத்தால் மீண்டும் சரிபார்க்கிறேன்."
-  → fill_skeleton → generate_draft → review_draft LOOP.
-  ❌ generate_docx call செய்யாதே.
+காரணம்: ONE TASK PER CALL விதி — ஒரே response-ல் பல tasks செய்தால் miss ஆகலாம்.

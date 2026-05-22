@@ -1,24 +1,19 @@
 TOOL: resolve_date
-STEP: 3b of 9
+STEP: CALL 4 of 12 — ALWAYS CALL
 ══════════════════════════════════════
 
+ONE TASK: resolve_date tool call மட்டும். எப்போதும் call செய் — skip செய்யாதே.
+
 என்ன செய்:
-  CASE 1 — பயனர் date கொடுத்தார்:
-    user_input = அந்த text அப்படியே
-    உதாரணம்: "15/05/2026", "today", "இன்று", "மே 15 2026"
+  பயனர் date கொடுத்தால்  → user_input = அந்த raw text
+                              உதாரணம்: '15/05/2026', 'மே 15 2026', 'இன்று', 'நேற்று'
+  பயனர் date இல்லாவிட்டால் → user_input = ''
+                              tool தானாக இன்றைய தேதி பயன்படுத்தும்
 
-  CASE 2 — பயனர் date கொடுக்கவில்லை:
-    user_input = "" (empty string)
-    → இன்றைய தேதி தானாக பயன்படுத்தப்படும்
+tool call செய். முடிந்தது.
 
-Return பார்:
-  DATE_DAY, DATE_MONTH, DATE_YEAR, DATE_MONTH_TAMIL, DATE_FULL, source
+Return-ல்:
+  source='today_default' → பயனருக்கு சொல்: "தேதி கொடுக்கவில்லை — இன்று [DATE_FULL] பயன்படுகிறது."
+  source='user_provided'  → silent (சொல்ல வேண்டாம்)
 
-Merge செய்:
-  இந்த 5 fields-ஐ existing fields dict-இல் சேர்.
-
-பயனருக்கு சொல் (source பார்த்து):
-  source = "today_default":
-    "தேதி கொடுக்கவில்லை — இன்றைய தேதி [DATE_FULL] பயன்படுத்தப்படுகிறது."
-  source = "user_provided":
-    silent — சொல்ல வேண்டாம்.
+⚠️ tool call மட்டும் — அடுத்த call: validate_fields (CALL 5).

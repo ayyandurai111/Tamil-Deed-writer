@@ -18,7 +18,7 @@ from constants import CRITICAL_FIELDS, TAMIL_MONTHS
 TOOL_DEFINITION = Tool(
     name="extract_fields",
     description=(
-        "[STEP 3 of 9] "
+        "[CALL 3 of 12] ONE TASK: இந்த tool call மட்டும். "
         "YOU (Claude) are the AI — read the user's raw prompt yourself and extract all deed fields. "
         "Then call this tool with what you found. "
         "DO NOT pass the raw prompt here — extract first, then call. "
@@ -44,7 +44,7 @@ TOOL_DEFINITION = Tool(
         "existing non-null values are never overwritten. "
         "new non-null values fill in null slots only. "
 
-        "After this tool returns, pass missing_fields to validate_fields."
+        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): resolve_date (CALL 4) — date இருந்தால் அது pass செய், இல்லாவிட்டால் '' pass செய். ALWAYS call."
     ),
     inputSchema={
         "type": "object",

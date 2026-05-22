@@ -1,26 +1,25 @@
 TOOL: extract_fields
-STEP: 3 of 9
+STEP: CALL 3 of 12
 ══════════════════════════════════════
 
-என்ன செய்:
-  முதல் call:
-    deed_type  = Step 1 result
-    prompt     = பயனரின் முழு raw text
-    existing_fields = {} (empty)
+ONE TASK: extract_fields tool call மட்டும்.
 
-  Follow-up call (loop iteration):
-    deed_type       = same
-    prompt          = பயனரின் புதிய reply மட்டும்
-    existing_fields = கடைசியாக collect ஆன fields dict
+tool call செய்வதற்கு முன் (இந்த call-லேயே):
+  1. பயனரின் raw prompt நீயே கவனமாக படி
+  2. Fields extract செய்:
+     • VENDOR_NAME, VENDOR_FATHER, VENDOR_AGE, VENDOR_ADDRESS,
+       VENDOR_AADHAAR (12 digits), VENDOR_PHONE, VENDOR_PREFIX
+     • PURCHASER_NAME, PURCHASER_FATHER, PURCHASER_AGE, PURCHASER_ADDRESS,
+       PURCHASER_AADHAAR (12 digits), PURCHASER_PHONE, PURCHASER_PREFIX
+     • DATE_DAY, DATE_MONTH (Tamil: மே/ஜூன்...), DATE_YEAR
+     • TOTAL_AMOUNT (digits only, no commas)
+     • NANJAI_OR_PUNJAI → exact Tamil word
+     • மற்ற எல்லா fields
+     • text-இல் இல்லாதது → null (கற்பனை செய்யாதே)
+  3. extracted_fields dict உருவாக்கு → tool-க்கு pass செய்
 
-MERGE RULE — மிக முக்கியம்:
-  ✅ existing non-null values — மாற்றாதே
-  ✅ புதிய non-null values — null fields-ஐ overwrite செய்
-  ❌ fields dict-ஐ எப்போதும் reset செய்யாதே
+Follow-up loop call:
+  extracted_fields = பயனரின் புதிய reply-ல் இருந்து மட்டும்
+  existing_fields  = கடைசியாக collect ஆன முழு fields dict
 
-Return பார்:
-  fields       — merged key-value dict
-  missing_fields — இன்னும் இல்லாத fields list
-
-Next step:
-  fields dict-ஐ resolve_date-க்கும் validate_fields-க்கும் pass செய்.
+⚠️ tool call மட்டும் — result analysis அடுத்த call-ல் (resolve_date).

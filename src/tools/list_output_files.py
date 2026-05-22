@@ -1,7 +1,7 @@
 """
 tools/list_output_files.py
 ==========================
-Tool 9 — list_output_files
+Tool 8 — list_output_files
 
 Lists all generated .docx files in the output folder with metadata
 and full download links.
@@ -20,8 +20,8 @@ from constants import OUTPUT_DIR, BASE_URL
 TOOL_DEFINITION = Tool(
     name="list_output_files",
     description=(
-        "[Optional — user request மட்டும்] "
-        "பயனர் 'என்ன files?', 'கோப்புகளை காட்டு', 'list files' என்று கேட்டால் மட்டும் call செய். "
+        "[CALL 12 of 12 — workflow final step] ONE TASK: இந்த tool call மட்டும். "
+        "generate_docx success=True பெற்ற பிறகு உடனே call செய். Return: filename, size_kb, created, download_url. "
         "output/ folder-இல் உள்ள எல்லா .docx files-ஐயும் காட்டும். "
         "Return: filename, size_kb, created, download_url (full https link). "
         "பயனருக்கு: 📁 உருவாக்கப்பட்ட பத்திரங்கள் ([count]): 1.[name] — [size]KB — [date] — [download_url]"

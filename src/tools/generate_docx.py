@@ -31,11 +31,11 @@ from constants import OUTPUT_DIR
 TOOL_DEFINITION = Tool(
     name="generate_docx",
     description=(
-        "[STEP 8 of 9] PRECONDITION: review_draft ready_for_docx=True கட்டாயம். "
-        "False-ஆக இருந்தால் இந்த tool-ஐ call செய்யாதே — hard rule. "
+        "[CALL 11 of 12] ONE TASK: இந்த tool call மட்டும். PRECONDITION: CALL 10 final decision ready_for_docx=True கட்டாயம். "
+        "False-ஆக இருந்தால் / CALL 7+8+9+10 முடியாமல் call செய்யாதே — hard rule. "
         "filled_skeleton = Step 5 result (review pass ஆனது). "
         "filename_prefix = 'vendor_purchaser' format உதாரணம்: 'ramasamy_murugan'. "
-        "success=True: உடனே list_output_files tool call செய் — download link பயனருக்கு காட்டு. "
+        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): list_output_files (CALL 12). "
         "PAN/TDS notes இருந்தால் காட்டு. disclaimer காட்டு. "
         "success=False: ❌ தோல்வி: [error] மீண்டும் முயற்சிக்கவும்."
     ),
@@ -171,7 +171,9 @@ def _party_text(d: dict, deed_type: str = "plot") -> str:
     district   = _blank(d.get("district", ""), "")
     aadhaar    = _blank(d.get("aadhaar", d.get("id_card", "")))
     phone      = _blank(d.get("phone"))
-    prefix     = _blank(d.get("prefix", "திரு"), "திரு")
+    # BUG 1 FIX: strip trailing dot — Claude may extract "திரு." (with dot),
+    # causing "திரு..பெயர்" when we add our own dot below.
+    prefix     = _blank(d.get("prefix", "திரு"), "திரு").rstrip(".")
 
     # Build address part
     addr_parts = [address]
@@ -377,8 +379,14 @@ def _build_agriculture_docx(data: dict, output_path: Path):
         chain_parts = []
         for entry in chain:
             if isinstance(entry, dict):
-                label  = entry.get("label", "")
-                owner  = _blank(entry.get("owner", ""))
+                label     = entry.get("label", "")
+                owner_raw = entry.get("owner", "")
+                # BUG 2 FIX: skip blank/empty/unfilled owners.
+                # Prevents "3வது உரிமையாளர்: ___________" in output.
+                if not owner_raw or str(owner_raw).strip() == "" \
+                        or str(owner_raw).startswith("{{"):
+                    continue
+                owner  = str(owner_raw).strip()
                 doc_no = _blank(entry.get("doc_no", ""), "")
                 part   = f"{label}: {owner}"
                 if doc_no and not doc_no.startswith("_"):

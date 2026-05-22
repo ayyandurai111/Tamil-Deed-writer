@@ -1,29 +1,18 @@
 TOOL: list_output_files
-STEP: Auto (generate_docx success பிறகு) + Optional (user request)
+STEP: CALL 12 of 12
 ══════════════════════════════════════
 
-எப்போது call செய்:
-  1. generate_docx success=True — உடனே தானாக call செய் (download link-க்கு)
-  2. பயனர் "என்ன files?", "கோப்புகளை காட்டு", "list files" என்று கேட்டால்
+ONE TASK: list_output_files tool call மட்டும்.
 
-Return பார்:
-  files[]
-    filename     — கோப்பு பெயர்
-    size_kb      — கோப்பு அளவு
-    created      — உருவாக்கிய நேரம்
-    download_url — முழு https download link
+CALL 11 generate_docx success=True பெற்ற பிறகு மட்டும் இந்த call.
 
-பயனருக்கு காட்டு (generate_docx பிறகு auto call):
-  📥 Download: [download_url]  ← இதை மட்டும் காட்டு
+tool call செய். return-ல் download link பயனருக்கு காட்டு.
 
-பயனருக்கு காட்டு (user request):
-  "📁 உருவாக்கப்பட்ட பத்திரங்கள் ([total_files] கோப்புகள்):
+பயனருக்கு சொல்:
+  "✅ பத்திரம் தயாரானது!
+   📥 Download: [link]
+   
+   ⚠️ இந்த பத்திரம் மாதிரி வரைவு மட்டுமே.
+      பதிவுக்கு முன் வழக்கறிஞர் / சார்பதிவாளர் ஆலோசனை பெறவும்."
 
-  1. [filename] — [size_kb] KB — [created]
-     📥 Download: [download_url]
-
-  2. [filename] — [size_kb] KB — [created]
-     📥 Download: [download_url]"
-
-files காலியாக இருந்தால்:
-  "📁 இன்னும் எந்த பத்திரமும் உருவாக்கப்படவில்லை."
+முடிந்தது — workflow complete.

@@ -19,7 +19,7 @@ from mcp.types import Tool, TextContent
 TOOL_DEFINITION = Tool(
     name="detect_deed_type",
     description=(
-        "[STEP 1 of 9] "
+        "[CALL 1 of 12] ONE TASK: இந்த tool call மட்டும்.  "
         "YOU (Claude) read the user prompt and determine the deed type yourself. "
         "Then call this tool with your determination. "
 
@@ -32,8 +32,8 @@ TOOL_DEFINITION = Tool(
         "'2400 sqft வீட்டுமனை' → plot even without explicit 'plot' word. "
         "(4) If unclear → default to plot. "
 
-        "After you determine, call this tool with deed_type and your reason. "
-        "Result-ஐ வைத்துக்கொள் — load_skeleton-க்கு தேவை. "
+        "tool call முடிந்தவுடன் response முடிந்தது. "
+        "NEXT CALL (தனி response): load_skeleton. "
         "பயனருக்கு சொல்: '[deed_type] பத்திரம் தயாரிக்கிறோம்.'"
     ),
     inputSchema={

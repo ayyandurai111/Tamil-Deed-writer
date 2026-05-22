@@ -1,31 +1,35 @@
 TOOL: validate_fields
-STEP: 4 of 9
+STEP: CALL 5 of 12
 ══════════════════════════════════════
 
+ONE TASK: validate_fields tool call மட்டும்.
+
 என்ன செய்:
-  deed_type = Step 1 result
+  deed_type = CALL 1 result
   fields    = extract_fields + resolve_date merge ஆன முழு dict
 
-Return பார்:
-  can_generate   = True / False
-  missing_critical = { field_key: tamil_label_with_law }
-  pan_tds_notes  = [] அல்லது warnings list
+tool call செய். முடிந்தது.
 
-CASE A — can_generate = True:
-  Step 5 (fill_skeleton) செல்.
+⚠️ tool call மட்டும் — result பார்த்து decision அடுத்த call-ல்:
 
-CASE B — can_generate = False:
-  பயனருக்கு இப்படி கேள்:
+  CASE A — can_generate = True:
+    அடுத்த call (CALL 6): fill_skeleton tool call செய்.
 
-  "பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை:
+  CASE B — can_generate = False:
+    அடுத்த call (CALL 5a): ஒரே ஒரு question மட்டும் கேள்:
+    "பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை:
+    1. [field 1]?
+    2. [field 2]?
+    ..."
+    ⚠️ question கேட்ட அதே call-ல் tool call செய்யாதே.
+    பயனர் reply பெற்ற பிறகு:
+      CALL 5b: extract_fields tool call (existing_fields pass)
+      CALL 5c: resolve_date tool call
+      CALL 5d: validate_fields tool call  ← LOOP
 
-  1. [missing field 1 Tamil label]?
-  2. [missing field 2 Tamil label]?
-  ...
-
-  இந்த விவரங்களை தந்தால் உடனே தயாரிக்கிறேன்."
-
-  பிறகு: extract_fields (new reply) → resolve_date → validate_fields LOOP.
-
-PAN/TDS alert இருந்தால்:
-  ⚠️ note-ஐ பயனருக்கு Tamil-இல் காட்டு — block செய்யாதே.
+  CASE C — pan_block = True:
+    அடுத்த call: PAN மட்டும் கேள் — வேறேதும் இல்லை.
+    "விற்பனை தொகை ₹10 லட்சத்திற்கு மேல் — PAN எண் கட்டாயம்:
+    விற்பவர் PAN: ?
+    வாங்குபவர் PAN: ?"
+    ⚠️ pan_block=True-ஆக இருக்கும் வரை fill_skeleton செல்லாதே.
