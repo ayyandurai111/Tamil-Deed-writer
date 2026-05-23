@@ -3,7 +3,7 @@ STEP: CALL 8 of 12 — L3 CONSISTENCY CHECK ONLY
 
 ONE TASK: L3 consistency மட்டும் சரிபார்.
 
-CALL 7 (verify_document_quality tool) result-ஐ வைத்துக்கொண்டு, இப்போது L3 மட்டும்:
+CALL 7 (review_draft tool) result-ஐ வைத்துக்கொண்டு, இப்போது L3 மட்டும்:
 
 சரிபார்க்க வேண்டியது:
   ✅ மாவட்டம் — header vs property — ஒரே மாதிரி உள்ளதா?

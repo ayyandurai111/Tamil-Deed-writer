@@ -1,11 +1,11 @@
-TOOL: verify_document_quality
+TOOL: review_draft
 STEP: CALL 7 of 12
 ══════════════════════════════════════
 
-ONE TASK: verify_document_quality tool call மட்டும்.
+ONE TASK: review_draft tool call மட்டும்.
 
 என்ன செய்:
-  clean_skeleton = Step 6 draft_document result ("clean_skeleton" key)
+  clean_skeleton = Step 6 fill_skeleton result ("clean_skeleton" key)
   deed_type      = Step 1 result
 
 tool call செய். முடிந்தது.

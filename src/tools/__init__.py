@@ -16,10 +16,6 @@ Workflow (9 steps):
   7. verify_document_quality     — L1–L4 skeleton review
   8. create_final_document       — render .docx (Latha font)
   9. get_document_download       — download links
-
-NOTE: Template is the single source of truth.
-      draft_document Phase 2 handles optional field cleanup.
-      verify_document_quality reads clean template directly.
 """
 
 from tools import (
@@ -35,15 +31,15 @@ from tools import (
 )
 
 TOOL_DEFINITIONS = [
-    detect_deed_type.TOOL_DEFINITION,    # 1
-    load_skeleton.TOOL_DEFINITION,       # 2
-    extract_fields.TOOL_DEFINITION,      # 3
-    resolve_date.TOOL_DEFINITION,        # 4
-    validate_fields.TOOL_DEFINITION,     # 5
-    fill_skeleton.TOOL_DEFINITION,       # 6
-    review_draft.TOOL_DEFINITION,        # 7
-    generate_docx.TOOL_DEFINITION,       # 8
-    list_output_files.TOOL_DEFINITION,   # 9
+    detect_deed_type.TOOL_DEFINITION,
+    load_skeleton.TOOL_DEFINITION,
+    extract_fields.TOOL_DEFINITION,
+    resolve_date.TOOL_DEFINITION,
+    validate_fields.TOOL_DEFINITION,
+    fill_skeleton.TOOL_DEFINITION,
+    review_draft.TOOL_DEFINITION,
+    generate_docx.TOOL_DEFINITION,
+    list_output_files.TOOL_DEFINITION,
 ]
 
 TOOL_HANDLERS = {

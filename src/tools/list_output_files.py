@@ -1,7 +1,7 @@
 """
-tools/list_output_files.py (get_document_download)
+tools/list_output_files.py
 ==========================
-Tool 9 — get_document_download
+Tool 8 — list_output_files
 
 Lists all generated .docx files in the output folder with metadata
 and full download links.
@@ -21,10 +21,10 @@ TOOL_DEFINITION = Tool(
     name="get_document_download",
     description=(
         "[CALL 12 of 12 — workflow final step] ONE TASK: இந்த tool call மட்டும். "
-        "create_final_document success=True பெற்ற பிறகு உடனே call செய். "
-        "tool call முடிந்தவுடன் response முடிந்தது. "
-        "NEXT CALL (தனி response): download_url மற்றும் file size-ஐ வைத்து HTML artifact உருவாக்கு (CALL 13). "
-        "❌ download_url-ஐ plain text-ஆக காட்டாதே. ❌ file name காட்டாதே. ❌ வேறு எந்த கேள்வியும் கேட்காதே."
+        "generate_docx success=True பெற்ற பிறகு உடனே call செய். "
+        "Return-ல் download_url மட்டும் பயனருக்கு காட்டு. "
+        "❌ file name காட்டாதே. ❌ link வேண்டுமா என கேட்காதே. ❌ வேறு எந்த கேள்வியும் கேட்காதே. "
+        "✅ Auto response format: '✅ பத்திரம் தயாரானது! 📥 [download_url] ⚠️ மாதிரி வரைவு மட்டுமே. பதிவுக்கு முன் வழக்கறிஞர் ஆலோசனை பெறவும்.'"
     ),
     inputSchema={
         "type": "object",

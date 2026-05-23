@@ -1,10 +1,10 @@
-TOOL: get_document_download
+TOOL: list_output_files
 STEP: CALL 12 of 12
 ══════════════════════════════════════
 
-ONE TASK: get_document_download tool call மட்டும்.
+ONE TASK: list_output_files tool call மட்டும்.
 
-CALL 11 create_final_document success=True பெற்ற பிறகு மட்டும் இந்த call.
+CALL 11 generate_docx success=True பெற்ற பிறகு மட்டும் இந்த call.
 
 tool call செய். return-ல் download_url எடு. பயனரிடம் கேட்காதே.
 

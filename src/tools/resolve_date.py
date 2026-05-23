@@ -1,7 +1,7 @@
 """
-tools/resolve_date.py (confirm_document_date)
+tools/resolve_date.py
 =====================
-Tool 4 — confirm_document_date
+Tool 8 — resolve_date
 
 Resolves the deed date from user input.
   • If user gives nothing          → today's date (default)
@@ -43,7 +43,7 @@ TOOL_DEFINITION = Tool(
         "source='today_default': பயனருக்கு சொல் — தேதி கொடுக்கவில்லை, இன்று [DATE_FULL] பயன்படுகிறது. "
         "source='user_provided': silent — பயனருக்கு சொல்ல வேண்டாம். "
         "tool call முடிந்தவுடன் response முடிந்தது. "
-        "NEXT CALL (தனி response): check_document_completeness (CALL 5)."
+        "NEXT CALL (தனி response): validate_fields (CALL 5)."
     ),
     inputSchema={
         "type": "object",

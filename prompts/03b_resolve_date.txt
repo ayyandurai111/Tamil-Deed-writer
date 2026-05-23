@@ -1,8 +1,8 @@
-TOOL: confirm_document_date
+TOOL: resolve_date
 STEP: CALL 4 of 12 — ALWAYS CALL
 ══════════════════════════════════════
 
-ONE TASK: confirm_document_date tool call மட்டும். எப்போதும் call செய் — skip செய்யாதே.
+ONE TASK: resolve_date tool call மட்டும். எப்போதும் call செய் — skip செய்யாதே.
 
 என்ன செய்:
   பயனர் date கொடுத்தால்  → user_input = அந்த raw text
@@ -16,4 +16,4 @@ Return-ல்:
   source='today_default' → பயனருக்கு சொல்: "தேதி கொடுக்கவில்லை — இன்று [DATE_FULL] பயன்படுகிறது."
   source='user_provided'  → silent (சொல்ல வேண்டாம்)
 
-⚠️ tool call மட்டும் — அடுத்த call: check_document_completeness (CALL 5).
+⚠️ tool call மட்டும் — அடுத்த call: validate_fields (CALL 5).

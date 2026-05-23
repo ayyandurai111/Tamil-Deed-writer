@@ -1,7 +1,7 @@
 """
-tools/review_draft.py (verify_document_quality)
+tools/review_draft.py
 =====================
-Tool 7 — verify_document_quality
+Tool 6 — review_draft  (STEP 6 of 8)
 
 Reviews the CLEAN SKELETON (not draft text) before DOCX generation.
 generate_draft tool removed — skeleton is the single source of truth.
@@ -38,7 +38,7 @@ TOOL_DEFINITION = Tool(
     name="verify_document_quality",
     description=(
         "[CALL 7 of 12] ONE TASK: இந்த tool call மட்டும் (L1+L2 programmatic check). "
-        "draft_document clean_skeleton result-ஐ pass செய். tool call முடிந்தவுடன் response முடிந்தது. "
+        "fill_skeleton clean_skeleton result-ஐ pass செய். tool call முடிந்தவுடன் response முடிந்தது. "
 
         "── TOOL செய்வது (L1 + L2 + L3 + L4) ─── "
         "இந்த tool L1+L2 மட்டும் programmatic-ஆக check செய்யும். L3+L4 = அடுத்த calls-ல். "
@@ -46,13 +46,17 @@ TOOL_DEFINITION = Tool(
         "── L1+L2 RESULT மட்டும் return ஆகும் ─── "
         "ready_for_docx result-ஐ வைத்துக்கொள் — CALL 10 final decision-க்கு தேவை. "
         "L3+L4 results + ready_for_docx சேர்த்து CALL 10-ல் மட்டும் decide செய். "
+        ""
+        ""
+        ""
+        ""
     ),
     inputSchema={
         "type": "object",
         "properties": {
             "clean_skeleton": {
                 "type": "object",
-                "description": "The cleaned skeleton JSON from draft_document (Phase 2 output)."
+                "description": "The cleaned skeleton JSON from fill_skeleton (Phase 2 output)."
             },
             "deed_type": {
                 "type": "string",
@@ -158,7 +162,7 @@ def _layer2_legal(skeleton: dict, deed_type: str) -> dict:
         if err:
             errors.append(err)
 
-    # PAN — only if values are present (PAN requirement already enforced by check_document_completeness)
+    # PAN — only if values are present (PAN requirement already enforced by validate_fields)
     for err in [
         _check_pan(v.get("pan"), "விற்பவர் PAN"),
         _check_pan(p.get("pan"), "வாங்குபவர் PAN"),
@@ -351,9 +355,9 @@ async def handle(arguments: dict) -> list[TextContent]:
     ready_for_docx = critical_count == 0
 
     if ready_for_docx and warning_count == 0:
-        summary = "✅ எல்லா layers pass — create_final_document செல்."
+        summary = "✅ எல்லா layers pass — generate_docx செல்."
     elif ready_for_docx and warning_count > 0:
-        summary = f"⚠️ {warning_count} எச்சரிக்கைகள் — பயனரிடம் காட்டி confirm கேள், பிறகு create_final_document."
+        summary = f"⚠️ {warning_count} எச்சரிக்கைகள் — பயனரிடம் காட்டி confirm கேள், பிறகு generate_docx."
     else:
         summary = f"❌ {critical_count} critical தவறுகள் — திருத்தியபின் மட்டுமே தொடரவும்."
 

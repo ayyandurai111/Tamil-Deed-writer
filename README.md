@@ -1,7 +1,7 @@
 # Tamil Sale Deed MCP Server 🏡
 
 AI-powered Tamil Sale Deed generator using MCP protocol.
-Any MCP-compatible AI (Claude, ChatGPT, Gemini, etc.) controls everything — **no AI API inside this server**.
+Claude/ChatGPT controls everything — **no AI API inside this server**.
 
 ## Project Structure
 
@@ -11,29 +11,29 @@ tamil-deed-mcp/
 │   ├── agriculture_skeleton.json   ← Agriculture template
 │   └── plot_skeleton.json          ← Plot/மனை template
 ├── src/
-│   └── server.py                   ← MCP Server
+│   └── server.py                   ← MCP Server (5 tools)
 ├── output/                         ← Generated DOCX files saved here
 ├── tests/
 │   └── test_tools.py               ← Smoke test
-├── SYSTEM_PROMPT.txt               ← Paste this into any AI chatbot
-└── claude_desktop_config.json      ← MCP config for Claude Desktop (stdio mode)
+├── CLAUDE_SYSTEM_PROMPT.txt        ← Paste this into Claude Desktop
+└── claude_desktop_config.json     ← MCP config for Claude Desktop
 ```
 
 ## Setup
 
 ### 1. Install dependencies
 ```bash
-pip install -r requirements.txt
+pip install python-docx "mcp[cli]"
 ```
 
 ### 2. Run tests
 ```bash
+cd tamil-deed-mcp
 python3 tests/test_tools.py
 ```
 
-### 3. Connect your AI chatbot
+### 3. Register with Claude Desktop
 
-#### Claude Desktop (Local / stdio)
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (Mac)
 or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -42,48 +42,49 @@ or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
   "mcpServers": {
     "tamil-deed-writer": {
       "command": "python3",
-      "args": ["/FULL/PATH/TO/tamil-deed-mcp/run_stdio.py"]
+      "args": ["/FULL/PATH/TO/tamil-deed-mcp/src/server.py"]
     }
   }
 }
 ```
-Restart Claude Desktop.
 
-#### Claude / ChatGPT / Gemini / Any bot (Remote / SSE)
-1. Deploy to Render (see render.yaml)
-2. Your MCP URL: `https://tamil-deed-writer.onrender.com/sse`
-3. Add this URL in your chatbot's MCP settings
-4. Paste `SYSTEM_PROMPT.txt` content as the system/custom instructions
+Restart Claude Desktop.
 
 ## MCP Tools
 
 | Tool | Purpose |
 |------|---------|
-| `identify_document_type` | Agriculture or Plot கண்டுபிடி |
-| `prepare_document_template` | சரியான template எடு |
-| `read_document_details` | Prompt-இல் இருந்து fields parse செய் |
-| `confirm_document_date` | தேதி → Tamil format |
-| `check_document_completeness` | சட்டரீதியான fields சரிபார்; missing list கொடு |
-| `draft_document` | Data-ஐ placeholders-இல் போடு |
-| `verify_document_quality` | L1–L4 skeleton review |
-| `create_final_document` | DOCX file உருவாக்கு |
-| `get_document_download` | Generated files + download links |
+| `detect_deed_type` | Agriculture or Plot கண்டுபிடி |
+| `load_skeleton` | சரியான template எடு |
+| `extract_fields` | Prompt-இல் இருந்து fields parse செய் **(NEW)** |
+| `validate_fields` | சட்டரீதியான fields சரிபார்; missing list கொடு |
+| `fill_skeleton` | Data-ஐ placeholders-இல் போடு |
+| `generate_docx` | DOCX file உருவாக்கு |
+| `list_output_files` | Generated files list |
 
 ## Workflow
 
 ```
-User types deed data
+User Prompt
     ↓
-detect_deed_type → load_skeleton → extract_fields → resolve_date
+detect_deed_type
     ↓
-validate_fields
-  ├── Missing fields? → AI asks user in Tamil → loop
-  └── Complete? → fill_skeleton → review_draft (L1–L4)
-                      ↓
-                 generate_docx → list_output_files → Download ✅
+load_skeleton
+    ↓
+extract_fields          ← Parses all fields from prompt automatically
+    ↓
+validate_fields         ← Checks legal requirements
+    ↓
+Missing fields?
+  ├── YES → Claude asks user in Tamil ✋
+  │          User replies
+  │          extract_fields (new reply + existing_fields merged)
+  │          validate_fields again  ← loop until complete
+  │
+  └── NO → fill_skeleton → generate_docx → Output ✅
 ```
 
-## Example Prompt
+## Example Prompt to Claude
 
 ```
 தஞ்சாவூர் மாவட்டம் பட்டுக்கோட்டை தாலுக்காவில்,
@@ -102,4 +103,4 @@ validate_fields
 ## Output
 
 Generated DOCX files are saved to the `output/` folder with Tamil font (Latha),
-legal formatting, and all clauses from the original templates.
+legal formatting, and all clauses from your original templates.

@@ -1,7 +1,7 @@
 """
-tools/load_skeleton.py (prepare_document_template)
+tools/load_skeleton.py
 ======================
-Tool 2 — prepare_document_template
+Tool 2 — load_skeleton
 
 Loads the blank JSON template for the detected deed type.
 Templates live in tamil-deed-mcp/templates/*.json
@@ -19,10 +19,10 @@ from constants import TEMPLATES_DIR
 TOOL_DEFINITION = Tool(
     name="prepare_document_template",
     description=(
-        "[CALL 2 of 12] ONE TASK: இந்த tool call மட்டும். identify_document_type result-ஐ deed_type-ஆக pass செய். "
+        "[CALL 2 of 12] ONE TASK: இந்த tool call மட்டும். detect_deed_type result-ஐ deed_type-ஆக pass செய். "
         "சரியான JSON template-ஐ {{PLACEHOLDER}} fields உடன் return செய்யும். "
-        "template-ஐ வைத்துக்கொள் — draft_document-க்கு தேவை. "
-        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): read_document_details. பயனருக்கு சொல்ல வேண்டாம் — silent step."
+        "skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை. "
+        "skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை. tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): extract_fields. பயனருக்கு சொல்ல வேண்டாம் — silent step."
     ),
     inputSchema={
         "type": "object",

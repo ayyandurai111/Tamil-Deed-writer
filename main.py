@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Tamil Sale Deed MCP Server",
     description="AI-powered Tamil Sale Deed generator via MCP protocol",
-    version="9.0.0",
+    version="10.0.0",
     lifespan=lifespan,
 )
 
@@ -86,7 +86,7 @@ async def health():
     return {
         "status":  "ok",
         "server":  "tamil-deed-writer",
-        "version": "9.0.0",
+        "version": "7.0.0",
         "tools":   len(TOOL_DEFINITIONS),
         "mcp_sse": "/sse",
         "message": "Tamil Sale Deed MCP Server is running 🏡",

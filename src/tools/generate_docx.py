@@ -1,7 +1,7 @@
 """
-tools/generate_docx.py (create_final_document)
+tools/generate_docx.py
 ======================
-Tool 8 — create_final_document
+Tool 8 — generate_docx
 
 Professional Tamil Sale Deed layout:
 - Single uniform font: Latha 12pt throughout
@@ -33,9 +33,9 @@ TOOL_DEFINITION = Tool(
     description=(
         "[CALL 11 of 12] ONE TASK: இந்த tool call மட்டும். PRECONDITION: CALL 10 final decision ready_for_docx=True கட்டாயம். "
         "False-ஆக இருந்தால் / CALL 7+8+9+10 முடியாமல் call செய்யாதே — hard rule. "
-        "filled_skeleton = Step 6 result (quality review pass ஆனது). "
+        "filled_skeleton = Step 5 result (review pass ஆனது). "
         "filename_prefix = 'vendor_purchaser' format உதாரணம்: 'ramasamy_murugan'. "
-        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): get_document_download (CALL 12). "
+        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): list_output_files (CALL 12). "
         "PAN/TDS notes இருந்தால் காட்டு. disclaimer காட்டு. "
         "success=False: ❌ தோல்வி: [error] மீண்டும் முயற்சிக்கவும்."
     ),
@@ -44,7 +44,7 @@ TOOL_DEFINITION = Tool(
         "properties": {
             "filled_skeleton": {
                 "type": "object",
-                "description": "The filled skeleton JSON returned by draft_document."
+                "description": "The filled skeleton JSON returned by fill_skeleton."
             },
             "filename_prefix": {
                 "type": "string",
@@ -717,7 +717,7 @@ async def handle(arguments: dict) -> list[TextContent]:
                 "success":  True,
                 "file":     str(output_path),
                 "filename": filename,
-                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க get_document_download tool call செய்."
+                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்."
             }, ensure_ascii=False, indent=2)
         )]
 

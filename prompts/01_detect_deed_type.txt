@@ -1,8 +1,8 @@
-TOOL: identify_document_type
+TOOL: detect_deed_type
 STEP: CALL 1 of 12
 ══════════════════════════════════════
 
-ONE TASK: identify_document_type tool call மட்டும்.
+ONE TASK: detect_deed_type tool call மட்டும்.
 
 என்ன செய்:
   பயனரின் முழு prompt படி → deed_type நீயே தீர்மானி → tool call செய்.
@@ -12,5 +12,5 @@ ONE TASK: identify_document_type tool call மட்டும்.
 
 tool call செய். முடிந்தது.
 
-⚠️ tool call மட்டும் — அடுத்த call: prepare_document_template (CALL 2).
+⚠️ tool call மட்டும் — அடுத்த call: load_skeleton (CALL 2).
 பயனருக்கு சொல்: "நிலம் வகை: [விவசாய நிலம் / மனை நிலம்] — தயாரிக்கிறோம்."

@@ -32,7 +32,7 @@ BASE_URL = os.environ.get("RENDER_EXTERNAL_URL", "https://tamil-deed-writer.onre
 PAN_THRESHOLD = 1_000_000    # ₹10 lakh  — Rule 114B
 TDS_THRESHOLD = 5_000_000    # ₹50 lakh  — S.194-IA
 
-# Shared month number → Tamil name map (used by read_document_details + confirm_document_date)
+# Shared month number → Tamil name map (used by extract_fields + resolve_date)
 TAMIL_MONTHS = {
     1:  "ஜனவரி",   2:  "பிப்ரவரி", 3:  "மார்ச்",
     4:  "ஏப்ரல்",  5:  "மே",        6:  "ஜூன்",
@@ -41,8 +41,8 @@ TAMIL_MONTHS = {
 }
 
 # ── OPTIONAL FIELDS ────────────────────────────────────────────────────────────
-# Fields the user may NOT provide. draft_document cleanup will set these to None
-# when blank, so create_final_document skips the phrase entirely — no "___" in output.
+# Fields the user may NOT provide. fill_skeleton cleanup will set these to None
+# when blank, so generate_docx skips the phrase entirely — no "___" in output.
 OPTIONAL_FIELDS = {
     "agriculture": frozenset({
         # Stamp

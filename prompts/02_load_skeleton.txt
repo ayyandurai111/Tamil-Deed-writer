@@ -1,12 +1,12 @@
-TOOL: prepare_document_template
+TOOL: load_skeleton
 STEP: CALL 2 of 12
 ══════════════════════════════════════
 
-ONE TASK: prepare_document_template tool call மட்டும்.
+ONE TASK: load_skeleton tool call மட்டும்.
 
 என்ன செய்:
-  deed_type = CALL 1 identify_document_type result
+  deed_type = CALL 1 detect_deed_type result
 
 tool call செய். முடிந்தது.
 
-⚠️ tool call மட்டும் — அடுத்த call: read_document_details (CALL 3).
+⚠️ tool call மட்டும் — அடுத்த call: extract_fields (CALL 3).
