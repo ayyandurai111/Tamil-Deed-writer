@@ -6,20 +6,20 @@ Central registry — imports every tool module and exposes:
   TOOL_DEFINITIONS  : list[Tool]   — passed to @server.list_tools()
   TOOL_HANDLERS     : dict         — maps tool name → async handle() function
 
-Workflow (8 steps):
-  1. detect_deed_type  — agriculture or plot
-  2. load_skeleton     — JSON template
-  3. extract_fields    — parse + merge fields
-  3b. resolve_date     — date → Tamil names
-  4. validate_fields   — legal check + PAN/TDS
-  5. fill_skeleton     — replace {{PLACEHOLDERS}} + cleanup blanks
-  6. review_draft      — L1–L4 skeleton review
-  7. generate_docx     — render .docx (Latha font)
-  8. list_output_files — download links (optional)
+Workflow (9 steps):
+  1. identify_document_type      — agriculture or plot
+  2. prepare_document_template   — JSON template
+  3. read_document_details       — parse + merge fields
+  4. confirm_document_date       — date → Tamil names
+  5. check_document_completeness — legal check + PAN/TDS
+  6. draft_document              — replace {{PLACEHOLDERS}} + cleanup blanks
+  7. verify_document_quality     — L1–L4 skeleton review
+  8. create_final_document       — render .docx (Latha font)
+  9. get_document_download       — download links
 
-NOTE: generate_draft removed. Skeleton is the single source of truth.
-      fill_skeleton Phase 2 handles optional field cleanup.
-      review_draft reads clean_skeleton directly (no draft prose needed).
+NOTE: Template is the single source of truth.
+      draft_document Phase 2 handles optional field cleanup.
+      verify_document_quality reads clean template directly.
 """
 
 from tools import (
@@ -38,22 +38,22 @@ TOOL_DEFINITIONS = [
     detect_deed_type.TOOL_DEFINITION,    # 1
     load_skeleton.TOOL_DEFINITION,       # 2
     extract_fields.TOOL_DEFINITION,      # 3
-    resolve_date.TOOL_DEFINITION,        # 3b
-    validate_fields.TOOL_DEFINITION,     # 4
-    fill_skeleton.TOOL_DEFINITION,       # 5
-    review_draft.TOOL_DEFINITION,        # 6
-    generate_docx.TOOL_DEFINITION,       # 7
-    list_output_files.TOOL_DEFINITION,   # 8
+    resolve_date.TOOL_DEFINITION,        # 4
+    validate_fields.TOOL_DEFINITION,     # 5
+    fill_skeleton.TOOL_DEFINITION,       # 6
+    review_draft.TOOL_DEFINITION,        # 7
+    generate_docx.TOOL_DEFINITION,       # 8
+    list_output_files.TOOL_DEFINITION,   # 9
 ]
 
 TOOL_HANDLERS = {
-    "detect_deed_type":  detect_deed_type.handle,
-    "load_skeleton":     load_skeleton.handle,
-    "extract_fields":    extract_fields.handle,
-    "resolve_date":      resolve_date.handle,
-    "validate_fields":   validate_fields.handle,
-    "fill_skeleton":     fill_skeleton.handle,
-    "review_draft":      review_draft.handle,
-    "generate_docx":     generate_docx.handle,
-    "list_output_files": list_output_files.handle,
+    "identify_document_type":      detect_deed_type.handle,
+    "prepare_document_template":   load_skeleton.handle,
+    "read_document_details":       extract_fields.handle,
+    "confirm_document_date":       resolve_date.handle,
+    "check_document_completeness": validate_fields.handle,
+    "draft_document":              fill_skeleton.handle,
+    "verify_document_quality":     review_draft.handle,
+    "create_final_document":       generate_docx.handle,
+    "get_document_download":       list_output_files.handle,
 }

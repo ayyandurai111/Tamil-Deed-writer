@@ -1,8 +1,8 @@
-TOOL: extract_fields
+TOOL: read_document_details
 STEP: CALL 3 of 12
 ══════════════════════════════════════
 
-ONE TASK: extract_fields tool call மட்டும்.
+ONE TASK: read_document_details tool call மட்டும்.
 
 tool call செய்வதற்கு முன் (இந்த call-லேயே):
   1. பயனரின் raw prompt நீயே கவனமாக படி
@@ -22,4 +22,4 @@ Follow-up loop call:
   extracted_fields = பயனரின் புதிய reply-ல் இருந்து மட்டும்
   existing_fields  = கடைசியாக collect ஆன முழு fields dict
 
-⚠️ tool call மட்டும் — result analysis அடுத்த call-ல் (resolve_date).
+⚠️ tool call மட்டும் — result analysis அடுத்த call-ல் (confirm_document_date).

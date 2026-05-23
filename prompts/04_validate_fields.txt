@@ -1,19 +1,19 @@
-TOOL: validate_fields
+TOOL: check_document_completeness
 STEP: CALL 5 of 12
 ══════════════════════════════════════
 
-ONE TASK: validate_fields tool call மட்டும்.
+ONE TASK: check_document_completeness tool call மட்டும்.
 
 என்ன செய்:
   deed_type = CALL 1 result
-  fields    = extract_fields + resolve_date merge ஆன முழு dict
+  fields    = read_document_details + confirm_document_date merge ஆன முழு dict
 
 tool call செய். முடிந்தது.
 
 ⚠️ tool call மட்டும் — result பார்த்து decision அடுத்த call-ல்:
 
   CASE A — can_generate = True:
-    அடுத்த call (CALL 6): fill_skeleton tool call செய்.
+    அடுத்த call (CALL 6): draft_document tool call செய்.
 
   CASE B — can_generate = False:
     அடுத்த call (CALL 5a): ஒரே ஒரு question மட்டும் கேள்:
@@ -23,13 +23,13 @@ tool call செய். முடிந்தது.
     ..."
     ⚠️ question கேட்ட அதே call-ல் tool call செய்யாதே.
     பயனர் reply பெற்ற பிறகு:
-      CALL 5b: extract_fields tool call (existing_fields pass)
-      CALL 5c: resolve_date tool call
-      CALL 5d: validate_fields tool call  ← LOOP
+      CALL 5b: read_document_details tool call (existing_fields pass)
+      CALL 5c: confirm_document_date tool call
+      CALL 5d: check_document_completeness tool call  ← LOOP
 
   CASE C — pan_block = True:
     அடுத்த call: PAN மட்டும் கேள் — வேறேதும் இல்லை.
     "விற்பனை தொகை ₹10 லட்சத்திற்கு மேல் — PAN எண் கட்டாயம்:
     விற்பவர் PAN: ?
     வாங்குபவர் PAN: ?"
-    ⚠️ pan_block=True-ஆக இருக்கும் வரை fill_skeleton செல்லாதே.
+    ⚠️ pan_block=True-ஆக இருக்கும் வரை draft_document செல்லாதே.

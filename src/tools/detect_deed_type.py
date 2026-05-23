@@ -1,12 +1,12 @@
 """
-tools/detect_deed_type.py
+tools/detect_deed_type.py (identify_document_type)
 =========================
-Tool 1 — detect_deed_type
+Tool 1 — identify_document_type
 
-Claude (the orchestrating AI) reads the user prompt and determines deed type.
-This tool receives Claude's determination, validates it, and returns it.
+The AI assistant reads the user prompt and determines deed type.
+This tool receives the AI's determination, validates it, and returns it.
 
-No keyword scoring. Claude reads context, not keywords.
+No keyword scoring. The AI reads context, not keywords.
 
 Annotation:
   readOnlyHint   = True
@@ -17,10 +17,10 @@ import json
 from mcp.types import Tool, TextContent
 
 TOOL_DEFINITION = Tool(
-    name="detect_deed_type",
+    name="identify_document_type",
     description=(
         "[CALL 1 of 12] ONE TASK: இந்த tool call மட்டும்.  "
-        "YOU (Claude) read the user prompt and determine the deed type yourself. "
+        "YOU (the AI assistant) read the user prompt and determine the deed type yourself. "
         "Then call this tool with your determination. "
 
         "HOW TO DETERMINE: "
@@ -33,7 +33,7 @@ TOOL_DEFINITION = Tool(
         "(4) If unclear → default to plot. "
 
         "tool call முடிந்தவுடன் response முடிந்தது. "
-        "NEXT CALL (தனி response): load_skeleton. "
+        "NEXT CALL (தனி response): prepare_document_template. "
         "பயனருக்கு சொல்: '[deed_type] பத்திரம் தயாரிக்கிறோம்.'"
     ),
     inputSchema={

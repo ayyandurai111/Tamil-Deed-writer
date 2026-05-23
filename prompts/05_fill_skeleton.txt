@@ -1,16 +1,16 @@
-TOOL: fill_skeleton
+TOOL: draft_document
 STEP: CALL 6 of 12
 ══════════════════════════════════════
 
-ONE TASK: fill_skeleton tool call மட்டும்.
+ONE TASK: draft_document tool call மட்டும்.
 
 என்ன செய்:
-  skeleton = CALL 2 load_skeleton result
-  fields   = validate_fields pass ஆன முழு dict
+  skeleton = CALL 2 prepare_document_template result
+  fields   = check_document_completeness pass ஆன முழு dict
 
 tool call செய். முடிந்தது.
 
 Return-ல் "clean_skeleton" key பயன்படுத்து — இதை மட்டும் CALL 7+11-க்கு pass செய்.
 
-⚠️ tool call மட்டும் — அடுத்த call: review_draft (CALL 7).
+⚠️ tool call மட்டும் — அடுத்த call: verify_document_quality (CALL 7).
 பயனருக்கு சொல்: "பத்திர வரைவு தயாரிக்கிறேன்..."

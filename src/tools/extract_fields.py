@@ -1,14 +1,14 @@
 """
-tools/extract_fields.py
+tools/extract_fields.py (read_document_details)
 =======================
-Tool 3 — extract_fields
+Tool 3 — read_document_details
 
-Claude reads the user prompt and extracts fields itself.
+The AI assistant reads the user prompt and extracts fields itself.
 This tool receives extracted fields, normalizes keys to UPPERCASE,
 merges with existing_fields, and returns what is still missing.
 
 FIX: All keys normalized to UPPERCASE before storing,
-     so key-case mismatches from Claude never cause placeholder leaks.
+     so key-case mismatches from the AI never cause placeholder leaks.
 """
 
 import json
@@ -16,10 +16,10 @@ from mcp.types import Tool, TextContent
 from constants import CRITICAL_FIELDS, TAMIL_MONTHS
 
 TOOL_DEFINITION = Tool(
-    name="extract_fields",
+    name="read_document_details",
     description=(
         "[CALL 3 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "YOU (Claude) are the AI — read the user's raw prompt yourself and extract all deed fields. "
+        "YOU (the AI assistant) are the one reading — read the user's raw prompt yourself and extract all deed fields. "
         "Then call this tool with what you found. "
         "DO NOT pass the raw prompt here — extract first, then call. "
 
@@ -44,7 +44,7 @@ TOOL_DEFINITION = Tool(
         "existing non-null values are never overwritten. "
         "new non-null values fill in null slots only. "
 
-        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): resolve_date (CALL 4) — date இருந்தால் அது pass செய், இல்லாவிட்டால் '' pass செய். ALWAYS call."
+        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): confirm_document_date (CALL 4) — date இருந்தால் அது pass செய், இல்லாவிட்டால் '' pass செய். ALWAYS call."
     ),
     inputSchema={
         "type": "object",
@@ -52,7 +52,7 @@ TOOL_DEFINITION = Tool(
             "deed_type": {
                 "type": "string",
                 "enum": ["agriculture", "plot"],
-                "description": "Deed type from detect_deed_type result."
+                "description": "Deed type from identify_document_type result."
             },
             "extracted_fields": {
                 "type": "object",
@@ -166,7 +166,7 @@ async def handle(arguments: dict) -> list[TextContent]:
             "missing_fields": missing,
             "message": (
                 f"✅ {len(found)} fields found, {len(missing)} still missing. "
-                "Pass these fields to validate_fields next."
+                "Pass these fields to check_document_completeness next."
             )
         }, ensure_ascii=False, indent=2)
     )]

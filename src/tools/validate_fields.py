@@ -1,7 +1,7 @@
 """
-tools/validate_fields.py
+tools/validate_fields.py (check_document_completeness)
 ========================
-Tool 4 — validate_fields
+Tool 5 — check_document_completeness
 
 Checks collected fields against CRITICAL_FIELDS law requirements.
 Also applies PAN / TDS rules based on total transaction amount.
@@ -19,15 +19,15 @@ from constants import CRITICAL_FIELDS, PAN_THRESHOLD, TDS_THRESHOLD
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="validate_fields",
+    name="check_document_completeness",
     description=(
         "[CALL 5 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "deed_type = CALL 1 result. fields = extract_fields result (resolve_date merge ஆனது இருந்தால் அதுவும் சேர்). "
-        "tool call முடிந்தவுடன் response முடிந்தது. can_generate=True → NEXT CALL: fill_skeleton. "
+        "deed_type = CALL 1 result. fields = read_document_details result (confirm_document_date merge ஆனது இருந்தால் அதுவும் சேர்). "
+        "tool call முடிந்தவுடன் response முடிந்தது. can_generate=True → NEXT CALL: draft_document. "
         "can_generate=False → NEXT CALL (தனி response): missing fields மட்டும் கேள் — tool call அல்ல. "
         "'பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை: 1.[field]? 2.[field]? ...' "
-        "பயனர் reply வந்த பிறகு: extract_fields CALL (existing_fields pass) → validate_fields CALL LOOP. "
-        "pan_block=True → can_generate எப்போதும் False — PAN எண் கேள், fill_skeleton செல்லாதே — HARD BLOCK. "
+        "பயனர் reply வந்த பிறகு: read_document_details CALL (existing_fields pass) → check_document_completeness CALL LOOP. "
+        "pan_block=True → can_generate எப்போதும் False — PAN எண் கேள், draft_document செல்லாதே — HARD BLOCK. "
         "tds_required=True மட்டும் (pan_block=False) → TDS note காட்டு, block இல்லை — proceed செய். "
         "pan_tds_notes-ஐ காட்டுவது advisory மட்டும் — pan_block=True-ஐ override செய்யாது."
     ),
@@ -41,7 +41,7 @@ TOOL_DEFINITION = Tool(
             },
             "fields": {
                 "type": "object",
-                "description": "The fields dict returned by extract_fields."
+                "description": "The fields dict returned by read_document_details."
             }
         },
         "required": ["deed_type", "fields"]

@@ -1,7 +1,7 @@
 """
-tools/fill_skeleton.py
+tools/fill_skeleton.py (draft_document)
 ======================
-Tool 5 — fill_skeleton  (STEP 5 of 8)
+Tool 6 — draft_document
 
 TWO-PHASE processing:
 
@@ -12,7 +12,7 @@ TWO-PHASE processing:
 After Phase 2 the skeleton is clean:
   • No "___________" in output
   • No phantom list rows (blank 3rd owner etc.)
-  • generate_docx and review_draft both receive the same clean data
+  • create_final_document and verify_document_quality both receive the same clean data
 """
 
 import json
@@ -22,23 +22,23 @@ from mcp.types import Tool, TextContent
 from constants import OPTIONAL_FIELDS
 
 TOOL_DEFINITION = Tool(
-    name="fill_skeleton",
+    name="draft_document",
     description=(
-        "[CALL 6 of 12] ONE TASK: இந்த tool call மட்டும். skeleton template-இல் உள்ள எல்லா {{PLACEHOLDER}}-ஐயும் "
+        "[CALL 6 of 12] ONE TASK: இந்த tool call மட்டும். template-இல் உள்ள எல்லா {{PLACEHOLDER}}-ஐயும் "
         "fields-இல் உள்ள values-ஆல் மாற்று. "
-        "skeleton = Step 2 load_skeleton result. "
-        "fields = validate_fields pass ஆன முழு dict. "
+        "skeleton = Step 2 prepare_document_template result. "
+        "fields = check_document_completeness pass ஆன முழு dict. "
         "Phase 1: placeholders replace. "
         "Phase 2: blank optional fields → None, blank list entries → removed (auto cleanup). "
-        "clean_skeleton-ஐ மட்டும் review_draft மற்றும் generate_docx-க்கு pass செய். "
-        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): review_draft (CALL 7). பயனருக்கு சொல்: பத்திர வரைவு தயாரிக்கிறேன்..."
+        "clean_skeleton-ஐ மட்டும் verify_document_quality மற்றும் create_final_document-க்கு pass செய். "
+        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): verify_document_quality (CALL 7). பயனருக்கு சொல்: பத்திர வரைவு தயாரிக்கிறேன்..."
     ),
     inputSchema={
         "type": "object",
         "properties": {
             "skeleton": {
                 "type": "object",
-                "description": "The skeleton JSON returned by load_skeleton."
+                "description": "The skeleton JSON returned by prepare_document_template."
             },
             "fields": {
                 "type": "object",
@@ -184,7 +184,7 @@ async def handle(arguments: dict) -> list[TextContent]:
             "message": (
                 f"✅ {fields_applied} fields applied. "
                 f"{len(removed_fields)} blank optional fields cleaned. "
-                "clean_skeleton-ஐ review_draft-க்கு pass செய்."
+                "clean_skeleton-ஐ verify_document_quality-க்கு pass செய்."
             )
         }, ensure_ascii=False, indent=2)
     )]

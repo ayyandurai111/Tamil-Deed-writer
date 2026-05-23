@@ -119,8 +119,8 @@
   },
   "section_7_label": "பகுதி 7 — விவசாய நிலம் சிறப்புச் சரத்துகள்",
   "agriculture_special": {
-    "land_nature_detail": "{{NANJAI_PUNJAI_DETAIL}}",
-    "land_nature_clause": "இந்த விவசாய நிலம் {{NANJAI_PUNJAI_DETAIL}} (நஞ்சை / புஞ்சை) வகையினதாகும். இதன் வகை மாற்றம் (Change of Land Use) செய்ய விரும்பினால், கொள்முதலாளர் தமிழ்நாடு அரசின் விதிகளின்படி (TN Change of Land Use Rules, 2017) தனியே அனுமதி பெற வேண்டும்.",
+    "land_nature_detail": "{{NANJAI_OR_PUNJAI}}",
+    "land_nature_clause": "இந்த விவசாய நிலம் {{NANJAI_OR_PUNJAI}} வகையினதாகும். இதன் வகை மாற்றம் (Change of Land Use) செய்ய விரும்பினால், கொள்முதலாளர் தமிழ்நாடு அரசின் விதிகளின்படி (TN Change of Land Use Rules, 2017) தனியே அனுமதி பெற வேண்டும்.",
     "irrigation_clause": "இந்த நிலத்தில் உள்ள அனைத்து நீர்ப்பாசன உரிமைகளும் (கால்வாய் பாசன பங்கு, கிணறு, ஆழ்துளைக் கிணறு, ஏரி பாசன பங்கு), தண்ணீர் கட்டமைப்புகளும் இந்த கிரையத்தோடு முழுமையான உரிமையுடன் கொள்முதலாளருக்கு மாற்றப்படுகின்றன. சர்ச்சைக்குரிய நீர் பங்கு ஏதும் இல்லை என்று விற்பனையாளர் உறுதி கூறுகிறார்.",
     "standing_crops": "{{STANDING_CROPS}}",
     "trees_detail": "{{TREES_DETAIL}}",

@@ -5,7 +5,7 @@ tests/test_tools.py
 Full test suite for Tamil Deed MCP v3.
 
 Tests ALL tools that have code logic.
-Claude-delegated behaviour (extract_fields, detect_deed_type, generate_draft)
+Claude-delegated behaviour (read_document_details, identify_document_type)
 is tested by simulating what Claude would pass.
 
 Run from project root:
@@ -31,7 +31,7 @@ async def run():
 
     # ── 1. detect_deed_type — Claude passes agriculture ───────────────
     print("\n[1] detect_deed_type — agriculture (Claude determined)")
-    d = await call("detect_deed_type", {
+    d = await call("identify_document_type", {
         "deed_type": "agriculture",
         "reason":    "user mentioned ஏக்கர், நஞ்சை, survey no"
     })
@@ -40,7 +40,7 @@ async def run():
 
     # ── 2. detect_deed_type — Claude passes plot ──────────────────────
     print("\n[2] detect_deed_type — plot (Claude determined)")
-    d = await call("detect_deed_type", {
+    d = await call("identify_document_type", {
         "deed_type": "plot",
         "reason":    "user mentioned sqft, door no, ward"
     })
@@ -49,20 +49,20 @@ async def run():
 
     # ── 3. detect_deed_type — invalid → defaults to plot ─────────────
     print("\n[3] detect_deed_type — invalid value → default plot")
-    d = await call("detect_deed_type", {"deed_type": "commercial"})
+    d = await call("identify_document_type", {"deed_type": "commercial"})
     assert d["deed_type"] == "plot", f"FAIL: {d}"
     print(f"   ✅ Defaulted to {d['deed_type']}")
 
     # ── 4. load_skeleton — agriculture ───────────────────────────────
     print("\n[4] load_skeleton — agriculture")
-    d = await call("load_skeleton", {"deed_type": "agriculture"})
+    d = await call("prepare_document_template", {"deed_type": "agriculture"})
     skel_ag = d["skeleton"]
     assert skel_ag["type"] == "agriculture"
     print(f"   ✅ Loaded agriculture skeleton")
 
     # ── 5. load_skeleton — plot ───────────────────────────────────────
     print("\n[5] load_skeleton — plot")
-    d = await call("load_skeleton", {"deed_type": "plot"})
+    d = await call("prepare_document_template", {"deed_type": "plot"})
     skel_plot = d["skeleton"]
     assert skel_plot["type"] == "plot"
     print(f"   ✅ Loaded plot skeleton")
@@ -85,7 +85,7 @@ async def run():
         "WITNESS2_NAME":  "அன்பழகன்",
         # Missing: VENDOR_AADHAAR, PURCHASER_AADHAAR, boundaries, etc.
     }
-    d = await call("extract_fields", {
+    d = await call("read_document_details", {
         "deed_type":        "agriculture",
         "extracted_fields": partial_extracted,
         "existing_fields":  {}
@@ -99,7 +99,7 @@ async def run():
 
     # ── 7. validate_fields — should fail (missing Aadhaar, boundaries) ─
     print("\n[7] validate_fields — should be can_generate=False")
-    d = await call("validate_fields", {"deed_type": "agriculture", "fields": fields})
+    d = await call("check_document_completeness", {"deed_type": "agriculture", "fields": fields})
     assert d["can_generate"] == False, f"FAIL: expected False, got {d}"
     print(f"   ✅ can_generate=False, missing={d['missing_count']}")
     print(f"   ✅ Sample missing: {list(d['missing_critical'].keys())[:4]}")
@@ -122,7 +122,7 @@ async def run():
         "PRIOR_YEAR":        "2010",
         "PRIOR_REG_OFFICE":  "பட்டுக்கோட்டை",
     }
-    d = await call("extract_fields", {
+    d = await call("read_document_details", {
         "deed_type":        "agriculture",
         "extracted_fields": followup_extracted,
         "existing_fields":  fields          # pass previous turn fields
@@ -138,14 +138,14 @@ async def run():
 
     # ── 9. resolve_date ───────────────────────────────────────────────
     print("\n[9] resolve_date — DD/MM/YYYY")
-    d = await call("resolve_date", {"user_input": "15/05/2026"})
+    d = await call("confirm_document_date", {"user_input": "15/05/2026"})
     assert d["DATE_DAY"]   == "15",   f"FAIL: {d}"
     assert d["DATE_MONTH"] == "மே",   f"FAIL: {d}"
     assert d["DATE_YEAR"]  == "2026", f"FAIL: {d}"
     print(f"   ✅ {d['DATE_FULL']} ({d['DATE_MONTH_TAMIL']})")
 
     print("\n[9b] resolve_date — empty → today default")
-    d = await call("resolve_date", {"user_input": ""})
+    d = await call("confirm_document_date", {"user_input": ""})
     assert d["source"] == "today_default", f"FAIL: {d}"
     print(f"   ✅ today_default → {d['DATE_FULL']}")
 
@@ -184,7 +184,7 @@ async def run():
         "WITNESS2_NAME": "அன்பழகன்",
         "WITNESS2_ADDRESS": "22, கோவில் தெரு, பட்டுக்கோட்டை",
     }
-    d = await call("fill_skeleton", {"skeleton": skel_ag, "fields": full_fields})
+    d = await call("draft_document", {"skeleton": skel_ag, "fields": full_fields})
     filled_ag = d["filled_skeleton"]
     assert filled_ag["vendor"]["name"] == "ராமசாமி", f"FAIL vendor name: {filled_ag['vendor']['name']}"
     assert filled_ag["property"]["land_nature"] == "நஞ்சை", f"FAIL land_nature"
@@ -229,7 +229,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 12. review_draft — L1 + L2 only, no L3 code ──────────────────
     print("\n[12] review_draft — clean draft should pass L1+L2")
-    d = await call("review_draft", {
+    d = await call("verify_document_quality", {
         "draft_text":      sample_draft,
         "filled_skeleton": filled_ag,
         "deed_type":       "agriculture"
@@ -244,7 +244,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
     # ── 13. review_draft — unfilled placeholder → L1 fail ─────────────
     print("\n[13] review_draft — unfilled placeholder → critical error")
     bad_draft = sample_draft + "\n{{MISSING_FIELD}} ல் தகவல் இல்லை."
-    d = await call("review_draft", {
+    d = await call("verify_document_quality", {
         "draft_text":      bad_draft,
         "filled_skeleton": filled_ag,
         "deed_type":       "agriculture"
@@ -255,7 +255,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 14. generate_docx — agriculture ───────────────────────────────
     print("\n[14] generate_docx — agriculture")
-    d = await call("generate_docx", {
+    d = await call("create_final_document", {
         "filled_skeleton":  filled_ag,
         "filename_prefix": "ramasamy_murugan"
     })
@@ -302,7 +302,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         "WITNESS2_NAME": "மணிகண்டன்",
         "WITNESS2_ADDRESS": "3, அண்ணாநகர் கிழக்கு, சென்னை",
     }
-    d2 = await call("fill_skeleton", {"skeleton": skel_plot, "fields": plot_fields})
+    d2 = await call("draft_document", {"skeleton": skel_plot, "fields": plot_fields})
     # Verify VENDOR_PHONE filled correctly (old bug was VENDOR_MOBILE mismatch)
     assert d2["filled_skeleton"]["vendor"]["phone"] == "9988776655", \
         f"FAIL: vendor phone mismatch: {d2['filled_skeleton']['vendor']['phone']}"
@@ -312,7 +312,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
     print(f"   ✅ VENDOR_PHONE filled correctly (old VENDOR_MOBILE bug fixed)")
     print(f"   ✅ STREET filled correctly (old STREET_NAME bug fixed)")
 
-    d3 = await call("generate_docx", {
+    d3 = await call("create_final_document", {
         "filled_skeleton":  d2["filled_skeleton"],
         "filename_prefix": "karthik_suresh_plot"
     })
@@ -322,7 +322,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 16. validate_fields — PAN check: plot deed (VENDOR_ID) ────────
     print("\n[16] validate_fields — plot, amount > 10L, PAN inside VENDOR_ID")
-    d = await call("validate_fields", {
+    d = await call("check_document_completeness", {
         "deed_type": "plot",
         "fields": {
             **plot_fields,
@@ -337,7 +337,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 17. validate_fields — plot, amount > 10L, NO PAN in VENDOR_ID ─
     print("\n[17] validate_fields — plot, amount > 10L, PAN missing from VENDOR_ID")
-    d = await call("validate_fields", {
+    d = await call("check_document_completeness", {
         "deed_type": "plot",
         "fields": {
             **plot_fields,
@@ -352,7 +352,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 18. list_output_files ─────────────────────────────────────────
     print("\n[18] list_output_files")
-    d = await call("list_output_files", {})
+    d = await call("get_document_download", {})
     assert d["total_files"] >= 2, f"FAIL: expected ≥2 files, got {d['total_files']}"
     print(f"   ✅ Total files: {d['total_files']}")
     for f in d["files"][:3]:
@@ -385,7 +385,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
 
     # ── 21. generate_docx — Tamil filename_prefix falls back safely ───
     print("\n[21] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
-    d2_tamil = await call("generate_docx", {
+    d2_tamil = await call("create_final_document", {
         "filled_skeleton":  d2["filled_skeleton"],
         "filename_prefix":  "ராமசாமி_முருகன்"    # Tamil chars
     })
@@ -405,7 +405,7 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         "consideration": {"total_amount": "2500000"},
         "property":      {}
     }
-    d_rev = await call("review_draft", {
+    d_rev = await call("verify_document_quality", {
         "draft_text":      "சுத்த விக்கிரயப் பத்திரம் — test draft text.",
         "filled_skeleton": skeleton_with_blanks,
         "deed_type":       "agriculture"

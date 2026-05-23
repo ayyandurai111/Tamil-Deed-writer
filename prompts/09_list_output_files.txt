@@ -1,18 +1,22 @@
-TOOL: list_output_files
+TOOL: get_document_download
 STEP: CALL 12 of 12
 ══════════════════════════════════════
 
-ONE TASK: list_output_files tool call மட்டும்.
+ONE TASK: get_document_download tool call மட்டும்.
 
-CALL 11 generate_docx success=True பெற்ற பிறகு மட்டும் இந்த call.
+CALL 11 create_final_document success=True பெற்ற பிறகு மட்டும் இந்த call.
 
-tool call செய். return-ல் download link பயனருக்கு காட்டு.
+tool call செய். return-ல் download_url எடு. பயனரிடம் கேட்காதே.
 
-பயனருக்கு சொல்:
+பயனருக்கு சொல் (file name சொல்லாதே, கேட்காதே):
   "✅ பத்திரம் தயாரானது!
-   📥 Download: [link]
+   📥 [download_url]
    
    ⚠️ இந்த பத்திரம் மாதிரி வரைவு மட்டுமே.
       பதிவுக்கு முன் வழக்கறிஞர் / சார்பதிவாளர் ஆலோசனை பெறவும்."
+
+❌ file name காட்டாதே
+❌ "link வேண்டுமா?" என கேட்காதே
+❌ வேறு எந்த கேள்வியும் கேட்காதே
 
 முடிந்தது — workflow complete.

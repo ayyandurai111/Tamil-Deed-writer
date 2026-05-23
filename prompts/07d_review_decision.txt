@@ -8,26 +8,26 @@ ONE TASK: CALL 7 + CALL 8 + CALL 9 results சேர்த்து final decisi
   ஒரே ஒரு decision எடு — வேறேதும் செய்யாதே.
 
 CASE A — எல்லாம் pass (critical = 0, warnings = 0):
-  "✅ சரிபார்ப்பு முடிந்தது — generate_docx செல்கிறேன்."
-  → CALL 11: generate_docx tool call செய்.
+  "✅ சரிபார்ப்பு முடிந்தது — create_final_document செல்கிறேன்."
+  → CALL 11: create_final_document tool call செய்.
 
 CASE B — L3 அல்லது L4 warnings மட்டும் (critical = 0):
   "⚠️ சிறு குறிப்புகள்:
    [warning list]
    தொடரட்டுமா? (ஆம் / இல்லை)"
-  → பயனர் "ஆம்" → CALL 11: generate_docx செல்.
+  → பயனர் "ஆம்" → CALL 11: create_final_document செல்.
   → பயனர் "இல்லை" → திருத்தம் கேள் → CALL 3 LOOP.
 
 CASE C — L1 அல்லது L2 critical errors:
   "❌ திருத்தங்கள் தேவை:
    🔴 [critical error list]
    திருத்திய விவரங்கள் கொடுங்கள்."
-  → CALL 6 (fill_skeleton) LOOP.
+  → CALL 6 (draft_document) LOOP.
 
 CASE D — L2 Aadhaar / PAN errors:
   "❌ [field] தவறானது — சரியான எண் கொடுங்கள்."
   → CALL 5a: user கேள் → CALL 3 LOOP.
 
-⚠️ generate_docx — CASE A அல்லது B confirm மட்டும் call செய்.
+⚠️ create_final_document — CASE A அல்லது B confirm மட்டும் call செய்.
 ⚠️ இந்த response-ல் tool call + decision — ஒரே நேரத்தில் செய்யாதே.
-   Decision response தனி. generate_docx call தனி (CALL 11).
+   Decision response தனி. create_final_document call தனி (CALL 11).

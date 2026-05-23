@@ -1,7 +1,7 @@
 """
-tools/generate_docx.py
+tools/generate_docx.py (create_final_document)
 ======================
-Tool 8 — generate_docx
+Tool 8 — create_final_document
 
 Professional Tamil Sale Deed layout:
 - Single uniform font: Latha 12pt throughout
@@ -29,13 +29,13 @@ from constants import OUTPUT_DIR
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="generate_docx",
+    name="create_final_document",
     description=(
         "[CALL 11 of 12] ONE TASK: இந்த tool call மட்டும். PRECONDITION: CALL 10 final decision ready_for_docx=True கட்டாயம். "
         "False-ஆக இருந்தால் / CALL 7+8+9+10 முடியாமல் call செய்யாதே — hard rule. "
-        "filled_skeleton = Step 5 result (review pass ஆனது). "
+        "filled_skeleton = Step 6 result (quality review pass ஆனது). "
         "filename_prefix = 'vendor_purchaser' format உதாரணம்: 'ramasamy_murugan'. "
-        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): list_output_files (CALL 12). "
+        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): get_document_download (CALL 12). "
         "PAN/TDS notes இருந்தால் காட்டு. disclaimer காட்டு. "
         "success=False: ❌ தோல்வி: [error] மீண்டும் முயற்சிக்கவும்."
     ),
@@ -44,7 +44,7 @@ TOOL_DEFINITION = Tool(
         "properties": {
             "filled_skeleton": {
                 "type": "object",
-                "description": "The filled skeleton JSON returned by fill_skeleton."
+                "description": "The filled skeleton JSON returned by draft_document."
             },
             "filename_prefix": {
                 "type": "string",
@@ -189,9 +189,10 @@ def _party_text(d: dict, deed_type: str = "plot") -> str:
     if deed_type == "agriculture":
         occupation = _blank(d.get("occupation", ""), "")
         caste      = _blank(d.get("caste", ""), "")
+        # FIX: correct Tamil order — PERSON அவர்களின் தந்தை FATHER
         id_part = f"{prefix}.{name}"
-        if relation and not relation.startswith("_"):
-            id_part += f" அவர்களின் {relation} {father}"
+        if father and not father.startswith("_"):
+            id_part += f" அவர்களின் தந்தை {father}"
         id_part += f" சுமார் {age} வயதுள்ள"
         if caste and not caste.startswith("_"):
             id_part += f" {caste}"
@@ -200,8 +201,12 @@ def _party_text(d: dict, deed_type: str = "plot") -> str:
     else:
         id_part = f"{prefix}.{father} அவர்களின் {relation} சுமார் {age} வயதுள்ள {prefix}.{name}"
 
+    pan = _blank(d.get("pan", ""), "")
+
     text = f"{addr_str} விலாசத்தில் வசிக்கும் {id_part}"
     text += f" (அடையாள அட்டை {aadhaar})"
+    if pan and not pan.startswith("_"):
+        text += f" (PAN: {pan})"
     text += f" (கைபேசி எண்.{phone})"
     return text
 
@@ -266,13 +271,14 @@ def _build_agriculture_docx(data: dict, output_path: Path):
     if district and not district.startswith("_"):
         date_str += f", {district} மாவட்டம்"
 
-    pur_text = _party_text(pur, deed_type="agriculture")
+    # FIX BUG 1: vendor (விற்பவர்) FIRST, purchaser (வாங்குபவர்) SECOND — correct Tamil deed order
     v_text   = _party_text(v,   deed_type="agriculture")
+    pur_text = _party_text(pur, deed_type="agriculture")
 
     opening = (
         f"{date_str},\n\n"
-        f"{pur_text} அவர்களுக்கு,\n\n"
-        f"{v_text} ஆகிய நான் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் "
+        f"{v_text} ஆகிய நான்,\n\n"
+        f"{pur_text} அவர்களுக்கு அடியிற்கண்ட சாட்சிகள் முன்னிலையில் "
         f"மனப்பூர்வமாய் சம்மதித்து எழுதிக் கொடுத்த விவசாய நில "
         f"சுத்த விக்கிரயப் பத்திரம் என்னவென்றால்,"
     )
@@ -711,7 +717,7 @@ async def handle(arguments: dict) -> list[TextContent]:
                 "success":  True,
                 "file":     str(output_path),
                 "filename": filename,
-                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்."
+                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க get_document_download tool call செய்."
             }, ensure_ascii=False, indent=2)
         )]
 

@@ -1,17 +1,17 @@
-TOOL: generate_docx
+TOOL: create_final_document
 STEP: CALL 11 of 12
 ══════════════════════════════════════
 
-ONE TASK: generate_docx tool call மட்டும்.
+ONE TASK: create_final_document tool call மட்டும்.
 
 PRECONDITION (இல்லாமல் call செய்யாதே):
   ✅ CALL 10 final decision — CASE A அல்லது B confirm மட்டும்
   ✅ ready_for_docx = True
 
 என்ன செய்:
-  filled_skeleton  = CALL 6 fill_skeleton "clean_skeleton" result
+  filled_skeleton  = CALL 6 draft_document "clean_skeleton" result
   filename_prefix  = "vendorname_purchasername" format (e.g. "ramasamy_murugan")
 
 tool call செய். முடிந்தது.
 
-⚠️ tool call மட்டும் — அடுத்த call: list_output_files (CALL 12).
+⚠️ tool call மட்டும் — அடுத்த call: get_document_download (CALL 12).
