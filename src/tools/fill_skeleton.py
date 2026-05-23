@@ -22,7 +22,7 @@ from mcp.types import Tool, TextContent
 from constants import OPTIONAL_FIELDS
 
 TOOL_DEFINITION = Tool(
-    name="draft_document",
+    name="fill_skeleton",
     description=(
         "[CALL 6 of 12] ONE TASK: இந்த tool call மட்டும். skeleton template-இல் உள்ள எல்லா {{PLACEHOLDER}}-ஐயும் "
         "fields-இல் உள்ள values-ஆல் மாற்று. "

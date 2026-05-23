@@ -17,7 +17,7 @@ from constants import TEMPLATES_DIR
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="prepare_document_template",
+    name="load_skeleton",
     description=(
         "[CALL 2 of 12] ONE TASK: இந்த tool call மட்டும். detect_deed_type result-ஐ deed_type-ஆக pass செய். "
         "சரியான JSON template-ஐ {{PLACEHOLDER}} fields உடன் return செய்யும். "

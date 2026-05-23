@@ -17,10 +17,10 @@ import json
 from mcp.types import Tool, TextContent
 
 TOOL_DEFINITION = Tool(
-    name="identify_document_type",
+    name="detect_deed_type",
     description=(
         "[CALL 1 of 12] ONE TASK: இந்த tool call மட்டும்.  "
-        "YOU (the AI assistant) read the user prompt and determine the deed type yourself. "
+        "YOU (Claude) read the user prompt and determine the deed type yourself. "
         "Then call this tool with your determination. "
 
         "HOW TO DETERMINE: "

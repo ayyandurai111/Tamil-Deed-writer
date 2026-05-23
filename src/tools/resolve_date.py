@@ -33,7 +33,7 @@ from constants import TAMIL_MONTHS
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="confirm_document_date",
+    name="resolve_date",
     description=(
         "[CALL 4 of 12] ONE TASK: இந்த tool call மட்டும். ALWAYS call — skip செய்யாதே. "
         "பயனர் date கொடுத்தால்: user_input = அந்த raw text ('today','இன்று','15/05/2026','மே 15 2026'). "

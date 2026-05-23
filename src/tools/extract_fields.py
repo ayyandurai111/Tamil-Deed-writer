@@ -16,10 +16,10 @@ from mcp.types import Tool, TextContent
 from constants import CRITICAL_FIELDS, TAMIL_MONTHS
 
 TOOL_DEFINITION = Tool(
-    name="read_document_details",
+    name="extract_fields",
     description=(
         "[CALL 3 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "YOU (the AI assistant) are — read the user's raw prompt yourself and extract all deed fields. "
+        "YOU (Claude) are the AI — read the user's raw prompt yourself and extract all deed fields. "
         "Then call this tool with what you found. "
         "DO NOT pass the raw prompt here — extract first, then call. "
 

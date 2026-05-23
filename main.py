@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Tamil Sale Deed MCP Server",
     description="AI-powered Tamil Sale Deed generator via MCP protocol",
-    version="10.0.0",
+    version="7.0.0",
     lifespan=lifespan,
 )
 

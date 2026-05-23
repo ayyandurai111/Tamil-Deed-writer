@@ -18,7 +18,7 @@ from constants import OUTPUT_DIR, BASE_URL
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="get_document_download",
+    name="list_output_files",
     description=(
         "[CALL 12 of 12 — workflow final step] ONE TASK: இந்த tool call மட்டும். "
         "generate_docx success=True பெற்ற பிறகு உடனே call செய். "

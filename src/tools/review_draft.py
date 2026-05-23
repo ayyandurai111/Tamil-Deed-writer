@@ -35,7 +35,7 @@ from mcp.types import Tool, TextContent
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="verify_document_quality",
+    name="review_draft",
     description=(
         "[CALL 7 of 12] ONE TASK: இந்த tool call மட்டும் (L1+L2 programmatic check). "
         "fill_skeleton clean_skeleton result-ஐ pass செய். tool call முடிந்தவுடன் response முடிந்தது. "

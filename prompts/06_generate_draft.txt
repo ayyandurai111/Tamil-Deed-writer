@@ -1,0 +1,26 @@
+TOOL: generate_draft
+STEP: 6 of 9
+══════════════════════════════════════
+
+என்ன செய்:
+  filled_skeleton = Step 5 result
+
+BLANK FIELDS RULE:
+  Tool description-ல் "BLANK FIELDS" list தானாக வரும்.
+  அந்த list-ல் உள்ள ஒவ்வொரு field-க்கும்:
+  → அந்த field சேர்ந்த முழு phrase நீக்கு
+  → மீதமுள்ள sentence இயல்பான Tamil grammar-உடன் இருக்க வேண்டும்
+  → Legal meaning மாற்றாதே
+
+  List காலியாக இருந்தால் → எல்லா fields filled, cleanup தேவையில்லை.
+
+Return பார்:
+  draft_text    — Tamil plain-text முழு பத்திரம்
+  draft_id      — unique ID (review-க்கு தேவை)
+  unfilled_count — draft-இல் உள்ள {{TAG}} count
+
+பயனருக்கு சொல்:
+  "Draft தயாரானது ✅ — review_draft-க்கு pass செய்கிறேன்..."
+
+Next step:
+  draft_text + filled_skeleton + deed_type → review_draft.

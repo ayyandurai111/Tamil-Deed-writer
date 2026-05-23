@@ -19,7 +19,7 @@ from constants import CRITICAL_FIELDS, PAN_THRESHOLD, TDS_THRESHOLD
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
-    name="check_document_completeness",
+    name="validate_fields",
     description=(
         "[CALL 5 of 12] ONE TASK: இந்த tool call மட்டும். "
         "deed_type = CALL 1 result. fields = extract_fields result (resolve_date merge ஆனது இருந்தால் அதுவும் சேர்). "
