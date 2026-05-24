@@ -29,8 +29,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse, Response
-from starlette.routing import Mount, Route
-from starlette.applications import Starlette
 import uvicorn
 
 from mcp.server.sse import SseServerTransport
@@ -56,13 +54,7 @@ async def handle_sse(request):
         )
 
 
-# ── Starlette app (MCP SSE routes) ───────────────────────────────────────────
-mcp_app = Starlette(
-    routes=[
-        Route("/sse", endpoint=handle_sse),
-        Mount("/messages", app=sse_transport.handle_post_message),
-    ]
-)
+# (MCP routes registered directly on FastAPI app below)
 
 
 # ── FastAPI app (health + file download routes) ───────────────────────────────
@@ -145,8 +137,9 @@ async def download_file(filename: str):
     raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
 
 
-# ── Mount MCP SSE app under the FastAPI app ───────────────────────────────────
-app.mount("/", mcp_app)
+# ── Mount MCP SSE routes directly (avoid catch-all "/" conflict) ─────────────
+app.add_route("/sse", handle_sse)
+app.mount("/messages", sse_transport.handle_post_message)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
