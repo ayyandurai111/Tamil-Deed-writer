@@ -177,12 +177,15 @@ async def handle(arguments: dict) -> list[TextContent]:
     return [TextContent(
         type="text",
         text=json.dumps({
-            "clean_skeleton":    clean_skeleton,
-            "fields_applied":    fields_applied,
-            "optional_cleaned":  len(removed_fields),
-            "removed_fields":    removed_fields,
+            "filled_skeleton":       clean_skeleton,   # alias kept for API compatibility
+            "clean_skeleton":        clean_skeleton,
+            "fields_applied":        fields_applied,
+            "placeholders_remaining": remaining,
+            "optional_cleaned":      len(removed_fields),
+            "removed_fields":        removed_fields,
             "message": (
                 f"✅ {fields_applied} fields applied. "
+                f"{remaining} placeholders remaining. "
                 f"{len(removed_fields)} blank optional fields cleaned. "
                 "clean_skeleton-ஐ review_draft-க்கு pass செய்."
             )

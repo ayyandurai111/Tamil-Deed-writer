@@ -75,44 +75,71 @@ def run_validation(deed_type: str, fields: dict) -> dict:
         if not val or str(val).startswith("{{"):
             missing[key] = label
 
-    # PAN / TDS amount check
+    # ── PAN / TDS amount check ────────────────────────────────────────────────
+    # BUG FIX 1: Strip rupee symbol (₹) and other non-numeric chars before int()
+    # Previously "₹1500000" caused ValueError → pan_needed silently became False.
+    import re as _re
+    _amount_raw = str(fields.get("TOTAL_AMOUNT", "0"))
+    _amount_clean = _re.sub(r"[^\d]", "", _amount_raw)  # keep digits only
     try:
-        amount     = int(str(fields.get("TOTAL_AMOUNT", "0")).replace(",", "").replace(" ", ""))
+        amount     = int(_amount_clean) if _amount_clean else 0
         pan_needed = amount >= PAN_THRESHOLD
         tds_needed = amount >= TDS_THRESHOLD
     except (ValueError, TypeError):
         pan_needed = False
         tds_needed = False
 
+    # Valid PAN pattern: 5 alpha, 4 digit, 1 alpha — anchored with word boundary
+    # BUG FIX 2: Use stricter pattern to reject "ABCDE1234FF" (extra trailing char)
+    _PAN_RE = _re.compile(r"(?<![A-Z0-9])[A-Z]{5}[0-9]{4}[A-Z](?![A-Z0-9])")
+
+    def _has_valid_pan(value: str) -> bool:
+        """Return True if value contains a syntactically valid PAN number."""
+        return bool(_PAN_RE.search((value or "").upper()))
+
     # If PAN needed, add to missing if absent
     if pan_needed:
         if deed_type == "agriculture":
-            for pan_key in ("VENDOR_PAN", "PURCHASER_PAN"):
-                if not fields.get(pan_key):
+            # BUG FIX 3: Agriculture also accepts PAN embedded in VENDOR_AADHAAR
+            # or any related field Claude may have stored it in, not only VENDOR_PAN.
+            # Primary check: dedicated VENDOR_PAN / PURCHASER_PAN fields.
+            # Fallback: search regex in VENDOR_AADHAAR field (some users give
+            # "Aadhaar: 1234..., PAN: ABCDE1234F" as a combined string).
+            for pan_key, fallback_key, role in (
+                ("VENDOR_PAN",    "VENDOR_AADHAAR",    "விற்பவர்"),
+                ("PURCHASER_PAN", "PURCHASER_AADHAAR", "வாங்குபவர்"),
+            ):
+                pan_val      = fields.get(pan_key, "") or ""
+                fallback_val = fields.get(fallback_key, "") or ""
+                if not _has_valid_pan(pan_val) and not _has_valid_pan(fallback_val):
                     missing[pan_key] = (
-                        f"{pan_key.split('_')[0].title()} PAN எண் "
+                        f"{role} PAN எண் "
                         f"(IT Rule 114B — ₹10 லட்சத்திற்கு மேல் PAN கட்டாயம்)"
                     )
         else:
             # Plot deed: PAN is embedded inside VENDOR_ID / PURCHASER_ID
-            import re as _re
-            pan_pattern = r"[A-Z]{5}[0-9]{4}[A-Z]"
             for id_key, label in (("VENDOR_ID", "விற்பவர்"), ("PURCHASER_ID", "வாங்குபவர்")):
                 val = fields.get(id_key, "") or ""
-                if not _re.search(pan_pattern, val.upper()):
+                if not _has_valid_pan(val):
                     missing[id_key + "_PAN"] = (
                         f"{label} PAN எண் (VENDOR_ID-ல் சேர்க்கவும் — "
                         f"IT Rule 114B — ₹10 லட்சத்திற்கு மேல் PAN கட்டாயம்)"
                     )
 
-    # Advisory notes in Tamil
+    # BUG FIX 4: Correct advisory wording — thresholds are >= not just >
+    # "மேல்" (above) is wrong at the boundary value; use "மேல் அல்லது சமம்" or ₹X+ phrasing
     notes = []
     if pan_needed:
-        notes.append("⚠️ தொகை ₹10 லட்சத்திற்கு மேல் — PAN எண் கட்டாயம் (IT Rule 114B)")
+        notes.append("⚠️ தொகை ₹10 லட்சம் அல்லது அதிகம் — PAN எண் கட்டாயம் (IT Rule 114B)")
     if tds_needed:
-        notes.append("⚠️ தொகை ₹50 லட்சத்திற்கு மேல் — வாங்குபவர் 1% TDS பிடிக்க வேண்டும் (IT S.194-IA)")
+        notes.append("⚠️ தொகை ₹50 லட்சம் அல்லது அதிகம் — வாங்குபவர் 1% TDS பிடிக்க வேண்டும் (IT S.194-IA)")
 
     pan_fields_missing = any("PAN" in k for k in missing)
+
+    # BUG FIX 5: When pan_block=True, add an explicit BLOCK note so Claude cannot
+    # misread the advisory notes as permission to proceed to fill_skeleton.
+    if pan_needed and pan_fields_missing:
+        notes.append("🚫 pan_block=True — PAN எண் இல்லாமல் fill_skeleton செல்லாதே. PAN கேள், பின் validate_fields மீண்டும்.")
 
     return {
         "missing_critical": missing,

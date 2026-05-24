@@ -107,7 +107,7 @@
     {
       "label": "தற்போதைய விற்பனையாளர்",
       "owner": "{{VENDOR_NAME}}",
-      "doc_no": "{{PRIOR_DOC_NO}}/{{PRIOR_YEAR}}"
+      "doc_no": "{{PRIOR_DOC_NO}}"
     }
   ],
   "section_6_label": "பகுதி 6 — சட்டரீதியான அறிவிப்புகள் (LEGAL DECLARATIONS)",

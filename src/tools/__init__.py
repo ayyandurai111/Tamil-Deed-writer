@@ -6,20 +6,18 @@ Central registry — imports every tool module and exposes:
   TOOL_DEFINITIONS  : list[Tool]   — passed to @server.list_tools()
   TOOL_HANDLERS     : dict         — maps tool name → async handle() function
 
-Workflow (8 steps):
+Workflow (8 tools, 12 calls):
   1. detect_deed_type  — agriculture or plot
   2. load_skeleton     — JSON template
   3. extract_fields    — parse + merge fields
   3b. resolve_date     — date → Tamil names
   4. validate_fields   — legal check + PAN/TDS
-  5. fill_skeleton     — replace {{PLACEHOLDERS}} + cleanup blanks
-  6. review_draft      — L1–L4 skeleton review
-  7. generate_docx     — render .docx (Latha font)
-  8. list_output_files — download links (optional)
-
-NOTE: generate_draft removed. Skeleton is the single source of truth.
-      fill_skeleton Phase 2 handles optional field cleanup.
-      review_draft reads clean_skeleton directly (no draft prose needed).
+  5. fill_skeleton     — replace {{PLACEHOLDERS}} + cleanup blanks → clean_skeleton
+  6. review_draft      — L1+L2 programmatic check on clean_skeleton
+     (CALL 8 = L3 consistency, CALL 9 = L4 grammar — Claude performs these, no tool)
+     (CALL 10 = final decision — Claude, no tool)
+  7. generate_docx     — render .docx (Latha font)  [CALL 11]
+  8. list_output_files — download links              [CALL 12]
 """
 
 from tools import (
@@ -41,9 +39,9 @@ TOOL_DEFINITIONS = [
     resolve_date.TOOL_DEFINITION,        # 3b
     validate_fields.TOOL_DEFINITION,     # 4
     fill_skeleton.TOOL_DEFINITION,       # 5
-    review_draft.TOOL_DEFINITION,        # 6
-    generate_docx.TOOL_DEFINITION,       # 7
-    list_output_files.TOOL_DEFINITION,   # 8
+    review_draft.TOOL_DEFINITION,        # 6 (CALL 7 — L1+L2 programmatic)
+    generate_docx.TOOL_DEFINITION,       # 7 (CALL 11)
+    list_output_files.TOOL_DEFINITION,   # 8 (CALL 12)
 ]
 
 TOOL_HANDLERS = {

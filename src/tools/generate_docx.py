@@ -176,12 +176,14 @@ def _party_text(d: dict, deed_type: str = "plot") -> str:
     prefix     = _blank(d.get("prefix", "திரு"), "திரு").rstrip(".")
 
     # Build address part
+    # Only append village/vattam/district if NOT already present in address string
+    # (prevents duplication like "நிலக்கோட்டை, நிலக்கோட்டை, திண்டுக்கல்")
     addr_parts = [address]
-    if village and not village.startswith("_"):
+    if village and not village.startswith("_") and village not in address:
         addr_parts.append(village)
-    if vattam and not vattam.startswith("_"):
+    if vattam and not vattam.startswith("_") and vattam not in address:
         addr_parts.append(vattam)
-    if district and not district.startswith("_"):
+    if district and not district.startswith("_") and district not in address:
         addr_parts.append(district)
     addr_str = ", ".join(addr_parts)
 
@@ -299,9 +301,11 @@ def _build_agriculture_docx(data: dict, output_path: Path):
     txn_dt  = _blank(con.get("transaction_date", ""), "")
     bank    = _blank(con.get("bank_name", ""), "")
 
+    # Strip trailing "மட்டும்" from words to avoid "மட்டும் மட்டும்" duplication
+    words_clean = words.rstrip().removesuffix("மட்டும்").rstrip()
     con_text = (
         f"இந்த விவசாய நிலத்தை விக்கிரயம் செய்வதற்கு நிர்ணயிக்கப்பட்ட "
-        f"மொத்த விலை ரூபாய் {total} (எழுத்தால்: {words} மட்டும்)."
+        f"மொத்த விலை ரூபாய் {total} (எழுத்தால்: {words_clean} மட்டும்)."
     )
     if advance and not advance.startswith("_"):
         con_text += f" இதில் முன்பணமாக ரூபாய் {advance}"
@@ -447,6 +451,29 @@ def _build_agriculture_docx(data: dict, output_path: Path):
         "id_copies":      "அடையாள ஆவண நகல்கள்",
         "other_docs":     "இதர ஆவணங்கள்",
     }
+    # Auto-derive mother_deed from chain_of_title doc numbers if not supplied
+    if isinstance(docs, dict):
+        mother = _blank(docs.get("mother_deed", ""), "")
+        if not mother or mother.startswith("_"):
+            chain_docs = []
+            for entry in data.get("chain_of_title", []):
+                if isinstance(entry, dict):
+                    # Skip the current vendor entry — it's the deed being registered
+                    if entry.get("label", "").startswith("தற்போதைய"):
+                        continue
+                    dn = _blank(entry.get("doc_no", ""), "")
+                    if dn and not dn.startswith("_") and "/" in dn:
+                        chain_docs.append(dn)
+            if chain_docs:
+                docs = dict(docs)
+                docs["mother_deed"] = " மற்றும் ".join(chain_docs)
+        # Default boolean doc fields to "ஆம்" if blank
+        for bool_key in ("patta_copy", "chitta_adangal", "ec_copy",
+                         "fmb_sketch", "tax_receipts", "id_copies"):
+            val = _blank(docs.get(bool_key, ""), "")
+            if not val or val.startswith("_"):
+                docs = dict(docs)
+                docs[bool_key] = "ஆம்"
     handed_parts = []
     if isinstance(docs, dict):
         for key, label in doc_labels.items():

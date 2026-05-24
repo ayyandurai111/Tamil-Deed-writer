@@ -1,9 +1,0 @@
-⚠️ இந்த file v8-வரை பயன்படுத்தப்பட்டது.
-v9-இல் இது 4 தனி calls-ஆக பிரிக்கப்பட்டது:
-
-  07a_review_L1L2.txt   → CALL 7  (tool call மட்டும்)
-  07b_review_L3.txt     → CALL 8  (L3 consistency மட்டும்)
-  07c_review_L4.txt     → CALL 9  (L4 grammar மட்டும்)
-  07d_review_decision.txt → CALL 10 (final decision மட்டும்)
-
-காரணம்: ONE TASK PER CALL விதி — ஒரே response-ல் பல tasks செய்தால் miss ஆகலாம்.

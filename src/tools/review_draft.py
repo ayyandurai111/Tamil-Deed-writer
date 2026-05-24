@@ -1,10 +1,10 @@
 """
 tools/review_draft.py
 =====================
-Tool 6 — review_draft  (STEP 6 of 8)
+Tool 6 — review_draft  (CALL 7 of 12)
 
-Reviews the CLEAN SKELETON (not draft text) before DOCX generation.
-generate_draft tool removed — skeleton is the single source of truth.
+Reviews the CLEAN SKELETON (from fill_skeleton) before DOCX generation.
+Input: clean_skeleton (also accepts filled_skeleton as alias) + deed_type.
 
 4-layer review:
 
@@ -101,6 +101,9 @@ def _layer1_placeholders(skeleton: dict) -> dict:
 
 def _check_aadhaar(val, label: str):
     if not val or str(val).startswith("{{"):
+        return None
+    # Skip blank placeholder values like "___________" from unfilled templates
+    if re.match(r'^[_\s]+$', str(val).strip()):
         return None
     digits = re.sub(r"[^0-9]", "", str(val))
     if len(digits) != 12:
@@ -331,7 +334,8 @@ def _layer4_structure(skeleton: dict, deed_type: str) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 async def handle(arguments: dict) -> list[TextContent]:
-    skeleton  = arguments.get("clean_skeleton", {})
+    # Accept both "clean_skeleton" (new API) and "filled_skeleton" (old API / backward compat)
+    skeleton  = arguments.get("clean_skeleton") or arguments.get("filled_skeleton", {})
     deed_type = arguments.get("deed_type", "agriculture")
 
     l1 = _layer1_placeholders(skeleton)

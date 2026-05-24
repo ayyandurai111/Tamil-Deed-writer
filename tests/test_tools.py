@@ -2,11 +2,11 @@
 """
 tests/test_tools.py
 ===================
-Full test suite for Tamil Deed MCP v3.
+Full test suite for Tamil Deed MCP v9.
 
 Tests ALL tools that have code logic.
-Claude-delegated behaviour (extract_fields, detect_deed_type, generate_draft)
-is tested by simulating what Claude would pass.
+Claude-delegated behaviour (extract_fields, detect_deed_type) is tested
+by simulating what Claude would pass.
 
 Run from project root:
   python3 tests/test_tools.py
@@ -26,7 +26,7 @@ async def call(name: str, args: dict) -> dict:
 # ════════════════════════════════════════════════════════════════════
 async def run():
     print("=" * 60)
-    print("Tamil Deed MCP v7 — Full Tool Test")
+    print("Tamil Deed MCP v9 — Full Tool Test")
     print("=" * 60)
 
     # ── 1. detect_deed_type — Claude passes agriculture ───────────────
@@ -190,68 +190,34 @@ async def run():
     assert filled_ag["property"]["land_nature"] == "நஞ்சை", f"FAIL land_nature"
     print(f"   ✅ fields_applied={d['fields_applied']}, remaining_placeholders={d['placeholders_remaining']}")
 
-    # ── 11. generate_draft — simulate Claude writing Tamil prose ──────
-    print("\n[11] generate_draft — Claude-written prose (simulated)")
-    sample_draft = """சுத்த விக்கிரயப் பத்திரம்
-ABSOLUTE SALE DEED — AGRICULTURE LAND
-
-தேதி: 15ம் மே மாதம் 2026ம் ஆண்டு | பதிவு அலுவலகம்: பட்டுக்கோட்டை | மாவட்டம்: தஞ்சாவூர்
-
-தரப்பினர் விவரம்:
-திரு ராமசாமி, தந்தை பெரியசாமி, வயது 55, 12 தெற்கு தெரு, பட்டுக்கோட்டை,
-தஞ்சாவூர் மாவட்டம், ஆதார் எண்: 1234 5678 9012 — விற்பனையாளர்.
-
-திரு முருகன், தந்தை கண்ணன், வயது 40, 34 வடக்கு தெரு, கும்பகோணம்,
-தஞ்சாவூர் மாவட்டம், ஆதார் எண்: 9876 5432 1098 — கொள்முதலாளர்.
-
-சொத்து விவரம்: தஞ்சாவூர் மாவட்டம், பட்டுக்கோட்டை தாலுக்கா,
-வேளாங்கண்ணி கிராமம், சர்வே எண் 45/2, பட்டா எண் 1234,
-நஞ்சை நிலம், பரப்பளவு 2 ஏக்கர் 50 சென்ட்.
-கிழக்கு: சர்வே எண் 46 — கண்ணன் நிலம். மேற்கு: சர்வே எண் 44 — அரசு சாலை.
-வடக்கு: கால்வாய். தெற்கு: சர்வே எண் 45/1 — செல்வம் நிலம்.
-
-விற்பனை தொகை: ரூ. 25,00,000 (இருபத்தைந்து லட்சம் மட்டும்). NEFT மூலம் பெறப்பட்டது.
-
-சாட்சிகள்: வேலுசாமி, 5 ஆத்தூர் தெரு, பட்டுக்கோட்டை.
-அன்பழகன், 22 கோவில் தெரு, பட்டுக்கோட்டை.
-
-விற்பனையாளர் கையொப்பம் / விரல் ரேகை: ராமசாமி
-கொள்முதலாளர் கையொப்பம் / விரல் ரேகை: முருகன்
-"""
-    d = await call("generate_draft", {
-        "draft_text":     sample_draft,
-        "filled_skeleton": filled_ag,
-        "deed_type":      "agriculture"
-    })
-    assert d["draft_text"] == sample_draft, "FAIL: draft_text not preserved"
-    assert "draft_id" in d,                 "FAIL: no draft_id"
-    print(f"   ✅ draft_id={d['draft_id']}, unfilled_tags={d['unfilled_tags']}, blank_fields={d['blank_fields']}")
-
-    # ── 12. review_draft — L1 + L2 only, no L3 code ──────────────────
-    print("\n[12] review_draft — clean draft should pass L1+L2")
+    # ── 11. review_draft — L1 + L2 + L3 + L4 check ──────────────────
+    print("\n[12] review_draft — clean draft should pass all layers")
     d = await call("review_draft", {
-        "draft_text":      sample_draft,
         "filled_skeleton": filled_ag,
         "deed_type":       "agriculture"
     })
     assert d["ready_for_docx"] == True, f"FAIL: {d['summary']}\nErrors: {d['layers']}"
-    assert "L3_consistency" in d["layers"], "FAIL: L3 note missing"
-    assert d["layers"]["L3_consistency"] == "Claude performs this check after tool returns"
+    assert "L3_consistency" in d["layers"], "FAIL: L3 layer missing"
+    l3 = d["layers"]["L3_consistency"]
+    assert isinstance(l3, dict),          "FAIL: L3 should be a dict"
+    assert "passed" in l3,                "FAIL: L3 missing 'passed' key"
+    assert "warnings" in l3,              "FAIL: L3 missing 'warnings' key"
     print(f"   ✅ ready_for_docx={d['ready_for_docx']}")
-    print(f"   ✅ L3 delegated to Claude: {d['layers']['L3_consistency']}")
+    print(f"   ✅ L3 layer present and structured: passed={l3['passed']}")
     print(f"   ✅ Summary: {d['summary']}")
 
-    # ── 13. review_draft — unfilled placeholder → L1 fail ─────────────
-    print("\n[13] review_draft — unfilled placeholder → critical error")
-    bad_draft = sample_draft + "\n{{MISSING_FIELD}} ல் தகவல் இல்லை."
+    # ── 13. review_draft — unfilled placeholder in skeleton → L1 fail ─
+    print("\n[13] review_draft — unfilled placeholder in skeleton → critical error")
+    import copy
+    bad_skeleton = copy.deepcopy(filled_ag)
+    bad_skeleton["vendor"]["name"] = "{{MISSING_FIELD}}"   # inject bad placeholder
     d = await call("review_draft", {
-        "draft_text":      bad_draft,
-        "filled_skeleton": filled_ag,
-        "deed_type":       "agriculture"
+        "clean_skeleton": bad_skeleton,
+        "deed_type":      "agriculture"
     })
     assert d["ready_for_docx"] == False, f"FAIL: should have failed"
     assert d["critical_count"] > 0
-    print(f"   ✅ ready_for_docx=False — L1 caught {{MISSING_FIELD}}")
+    print(f"   ✅ ready_for_docx=False — L1 caught {{{{MISSING_FIELD}}}} in skeleton")
 
     # ── 14. generate_docx — agriculture ───────────────────────────────
     print("\n[14] generate_docx — agriculture")
@@ -370,21 +336,8 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         assert readonly != "MISSING", f"FAIL: {name} has no annotations.readOnlyHint"
         print(f"   ✅ {name:<22} readOnly={readonly}")
 
-    # ── 20. generate_draft blank_fields — dotted path (improvement) ───
-    print("\n[20] generate_draft blank_fields — dotted path format")
-    d = await call("generate_draft", {
-        "draft_text":      "test draft",
-        "filled_skeleton": {"vendor": {"name": "ராமன்", "aadhaar": ""}, "prop": {"area": ""}},
-        "deed_type":       "plot"
-    })
-    blanks = d["blank_fields"]
-    assert any("." in b for b in blanks), f"FAIL: expected dotted paths, got {blanks}"
-    assert any("AADHAAR" in b for b in blanks), f"FAIL: aadhaar not in blanks: {blanks}"
-    assert "AADHAAR" not in blanks, f"FAIL: bare 'AADHAAR' without path context: {blanks}"
-    print(f"   ✅ blank_fields use dotted paths: {blanks}")
-
-    # ── 21. generate_docx — Tamil filename_prefix falls back safely ───
-    print("\n[21] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
+    # ── 20. generate_docx — Tamil filename_prefix falls back safely ───
+    print("\n[20] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
     d2_tamil = await call("generate_docx", {
         "filled_skeleton":  d2["filled_skeleton"],
         "filename_prefix":  "ராமசாமி_முருகன்"    # Tamil chars
@@ -396,8 +349,8 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         f"FAIL: consecutive underscores suggest bad sanitization: {fname}"
     print(f"   ✅ Tamil prefix → safe filename: {fname}")
 
-    # ── 22. review_draft — ___ placeholders don't cause false Aadhaar errors
-    print("\n[22] review_draft — underscore blanks don't trigger false Aadhaar errors")
+    # ── 21. review_draft — ___ placeholders don't cause false Aadhaar errors
+    print("\n[21] review_draft — underscore blanks don't trigger false Aadhaar errors")
     skeleton_with_blanks = {
         "vendor":        {"aadhaar": "___________", "pan": "___________"},
         "purchaser":     {"aadhaar": "___________", "pan": "___________"},
@@ -416,8 +369,89 @@ ABSOLUTE SALE DEED — AGRICULTURE LAND
         f"FAIL: ___ blanks triggered false Aadhaar error: {aadhaar_errors}"
     print(f"   ✅ No false Aadhaar errors for blank (___ ) fields")
 
+    # ── 22. PAN: rupee symbol in TOTAL_AMOUNT doesn't bypass PAN check ──
+    print("\n[22] validate_fields — ₹ symbol in TOTAL_AMOUNT still triggers PAN")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {"TOTAL_AMOUNT": "₹1500000"},  # rupee symbol
+    })
+    assert d["pan_required"] == True, \
+        f"FAIL: ₹ symbol caused pan_required=False (rupee strip bug): {d}"
+    print(f"   ✅ ₹ symbol stripped correctly — pan_required=True")
+
+    # ── 23. PAN: amount with lakhs notation (25,00,000) parsed correctly ─
+    print("\n[23] validate_fields — Indian lakh notation 25,00,000")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {"TOTAL_AMOUNT": "25,00,000"},
+    })
+    assert d["pan_required"] == True, f"FAIL: comma notation not parsed: {d}"
+    assert d["tds_required"] == False, f"FAIL: 25L should not trigger TDS (50L threshold): {d}"
+    print(f"   ✅ 25,00,000 parsed → pan_required=True, tds_required=False")
+
+    # ── 24. PAN: strict regex rejects malformed PAN (too long) ───────────
+    print("\n[24] validate_fields — malformed PAN (ABCDE1234FF) rejected")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {
+            "TOTAL_AMOUNT": "1500000",
+            "VENDOR_PAN":    "ABCDE1234FF",   # 11 chars — invalid
+            "PURCHASER_PAN": "FGHIJ5678K",    # valid
+        }
+    })
+    assert d["pan_block"] == True, \
+        f"FAIL: malformed PAN ABCDE1234FF should be rejected (pan_block should be True): {d}"
+    assert "VENDOR_PAN" in d["missing_critical"], \
+        f"FAIL: VENDOR_PAN with malformed value should be in missing: {d['missing_critical']}"
+    print(f"   ✅ Malformed PAN 'ABCDE1234FF' correctly rejected")
+
+    # ── 25. PAN: agriculture PAN in VENDOR_AADHAAR fallback field ────────
+    print("\n[25] validate_fields — agriculture PAN found in VENDOR_AADHAAR fallback")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {
+            "TOTAL_AMOUNT":      "1500000",
+            "VENDOR_PAN":        "",                           # blank dedicated field
+            "VENDOR_AADHAAR":    "123456789012 PAN ABCDE1234F",  # PAN embedded here
+            "PURCHASER_PAN":     "FGHIJ5678K",
+        }
+    })
+    assert "VENDOR_PAN" not in d["missing_critical"], \
+        f"FAIL: PAN found in VENDOR_AADHAAR fallback should not be flagged missing: {d['missing_critical']}"
+    assert d["pan_block"] == False, \
+        f"FAIL: pan_block should be False when PAN found in fallback: {d}"
+    print(f"   ✅ PAN in VENDOR_AADHAAR fallback correctly accepted")
+
+    # ── 26. TDS threshold wording — 50L exactly triggers TDS ─────────────
+    print("\n[26] validate_fields — TDS at exactly ₹50L boundary")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {
+            "TOTAL_AMOUNT":  "5000000",   # exactly 50L
+            "VENDOR_PAN":    "ABCDE1234F",
+            "PURCHASER_PAN": "FGHIJ5678K",
+        }
+    })
+    assert d["tds_required"] == True, f"FAIL: 50L exactly should trigger TDS: {d}"
+    tds_note = next((n for n in d["pan_tds_notes"] if "TDS" in n), "")
+    assert "அல்லது அதிகம்" in tds_note, \
+        f"FAIL: TDS note should say 'அல்லது அதிகம்' not 'மேல்': {tds_note}"
+    print(f"   ✅ tds_required=True at 50L, note wording correct: 'அல்லது அதிகம்'")
+
+    # ── 27. pan_block note is explicit ───────────────────────────────────
+    print("\n[27] validate_fields — pan_block=True emits explicit block note")
+    d = await call("validate_fields", {
+        "deed_type": "agriculture",
+        "fields": {"TOTAL_AMOUNT": "1500000"},
+    })
+    assert d["pan_block"] == True
+    block_notes = [n for n in d["pan_tds_notes"] if "pan_block=True" in n]
+    assert len(block_notes) == 1, \
+        f"FAIL: expected 1 explicit pan_block note, got: {d['pan_tds_notes']}"
+    print(f"   ✅ Explicit 🚫 pan_block note present: {block_notes[0][:60]}...")
+
     print("\n" + "=" * 60)
-    print("✅ ALL 22 TESTS PASSED — MCP Server v7 Ready!")
+    print("✅ ALL 27 TESTS PASSED — MCP Server v9 Ready!")
     print("=" * 60)
 
 
