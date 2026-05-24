@@ -28,7 +28,7 @@ sys.path.insert(0, str(SRC_DIR))
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.routing import Mount, Route
 from starlette.applications import Starlette
 import uvicorn
@@ -38,6 +38,7 @@ from mcp.server.sse import SseServerTransport
 # Import the MCP server instance from src/server.py
 from server import server as mcp_server
 from constants import OUTPUT_DIR
+from file_store import get as _mem_get
 
 # ── SSE Transport ─────────────────────────────────────────────────────────────
 sse_transport = SseServerTransport("/messages/")
@@ -125,15 +126,23 @@ async def download_file(filename: str):
     if not filename.endswith(".docx") or "/" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
 
-    filepath = OUTPUT_DIR / filename
-    if not filepath.exists():
-        raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
+    MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
-    return FileResponse(
-        path=str(filepath),
-        filename=filename,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
+    # 1️⃣ Try disk first
+    filepath = OUTPUT_DIR / filename
+    if filepath.exists():
+        return FileResponse(path=str(filepath), filename=filename, media_type=MEDIA_TYPE)
+
+    # 2️⃣ Fall back to in-memory store (survives Render /tmp wipe)
+    data = _mem_get(filename)
+    if data:
+        return Response(
+            content=data,
+            media_type=MEDIA_TYPE,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
 
 
 # ── Mount MCP SSE app under the FastAPI app ───────────────────────────────────
