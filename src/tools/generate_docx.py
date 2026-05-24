@@ -15,6 +15,8 @@ Professional Tamil Sale Deed layout:
 """
 
 import json
+import secrets
+import string
 from datetime import datetime
 from pathlib import Path
 from mcp.types import Tool, TextContent
@@ -26,6 +28,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from constants import OUTPUT_DIR
+from file_store import put as _mem_store
 
 # ── Tool definition ────────────────────────────────────────────────────────────
 TOOL_DEFINITION = Tool(
@@ -726,10 +729,10 @@ async def handle(arguments: dict) -> list[TextContent]:
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
 
-    timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
-    safe_prefix = safe_prefix.strip("_") or "deed"   # fall back if all chars were non-ASCII
-    filename    = f"{safe_prefix}_{deed_type}_{timestamp}.docx"
+    first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
+    random_str  = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+    filename    = f"{first_name}_{random_str}.docx"
     output_path = OUTPUT_DIR / filename
 
     try:
@@ -737,6 +740,10 @@ async def handle(arguments: dict) -> list[TextContent]:
             _build_agriculture_docx(filled_skeleton, output_path)
         else:
             _build_plot_docx(filled_skeleton, output_path)
+
+        # ── Keep a copy in memory so the download endpoint works even
+        #    after Render's ephemeral /tmp is wiped on service restart.
+        _mem_store(filename, output_path.read_bytes())
 
         return [TextContent(
             type="text",
