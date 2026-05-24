@@ -37,7 +37,7 @@ from mcp.server.sse import SseServerTransport
 
 # Import the MCP server instance from src/server.py
 from server import server as mcp_server
-from constants import OUTPUT_DIR
+from constants import OUTPUT_DIR, BASE_URL
 from file_store import get as _mem_get
 
 # ── SSE Transport ─────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ async def list_files():
                 "created":  datetime.fromtimestamp(f.stat().st_mtime).strftime(
                     "%Y-%m-%d %H:%M:%S"
                 ),
-                "download_url": f"/download/{f.name}",
+                "download_url": f"{BASE_URL.rstrip('/')}/download/{f.name}",
             }
             for f in files
         ],

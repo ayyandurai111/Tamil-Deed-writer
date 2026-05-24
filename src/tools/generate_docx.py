@@ -724,12 +724,47 @@ def _build_plot_docx(data: dict, output_path: Path):
 #  HANDLER
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _flatten_skeleton(skeleton: dict) -> dict:
+    """Flatten nested skeleton into a flat key-value dict for field checking."""
+    flat = {}
+    def _walk(obj):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if isinstance(v, str):
+                    flat[k.upper()] = v
+                elif isinstance(v, (dict, list)):
+                    _walk(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                _walk(item)
+    _walk(skeleton)
+    return flat
+
+
 async def handle(arguments: dict) -> list[TextContent]:
     filled_skeleton = arguments.get("filled_skeleton", {})
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
 
-    safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
+    # ── Hard block: validate critical fields before generating ──────────────
+    required = CRITICAL_FIELDS.get(deed_type, {})
+    flat     = _flatten_skeleton(filled_skeleton)
+    missing  = {k: label for k, label in required.items() if not flat.get(k)}
+    if missing:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "can_generate": False,
+                "missing_critical": missing,
+                "message": (
+                    "❌ பத்திரம் உருவாக்க முடியவில்லை — கீழ்க்கண்ட தகவல்கள் தேவை:\n"
+                    + "\n".join(f"  • {label}" for label in missing.values())
+                )
+            }, ensure_ascii=False, indent=2)
+        )]
+
+        safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
     random_str  = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
     filename    = f"{first_name}_{random_str}.docx"
