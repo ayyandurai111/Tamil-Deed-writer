@@ -3,12 +3,12 @@ tools/extract_fields.py
 =======================
 Tool 3 — extract_fields
 
-Claude reads the user prompt and extracts fields itself.
+The AI reads the user prompt and extracts fields itself.
 This tool receives extracted fields, normalizes keys to UPPERCASE,
 merges with existing_fields, and returns what is still missing.
 
 FIX: All keys normalized to UPPERCASE before storing,
-     so key-case mismatches from Claude never cause placeholder leaks.
+     so key-case mismatches from the AI never cause placeholder leaks.
 """
 
 import json
@@ -19,7 +19,7 @@ TOOL_DEFINITION = Tool(
     name="extract_fields",
     description=(
         "[CALL 3 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "YOU (Claude) are the AI — read the user's raw prompt yourself and extract all deed fields. "
+        "YOU (the AI) — read the user's raw prompt yourself and extract all deed fields. "
         "Then call this tool with what you found. "
         "DO NOT pass the raw prompt here — extract first, then call. "
 
@@ -57,7 +57,7 @@ TOOL_DEFINITION = Tool(
             "extracted_fields": {
                 "type": "object",
                 "description": (
-                    "Fields YOU extracted from the user prompt. "
+                    "Fields YOU (the AI) extracted from the user prompt. "
                     "Every key must be UPPERCASE matching CRITICAL_FIELDS. "
                     "Use null for fields not found in the prompt."
                 )
@@ -72,6 +72,43 @@ TOOL_DEFINITION = Tool(
             }
         },
         "required": ["deed_type", "extracted_fields"]
+    },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "fields": {
+                "type": "object",
+                "description": "Merged dict of all collected field values (UPPERCASE keys). Null values indicate missing fields."
+            },
+            "found_count": {
+                "type": "integer",
+                "description": "Number of fields that have non-null values."
+            },
+            "missing_count": {
+                "type": "integer",
+                "description": "Number of fields still missing (null)."
+            },
+            "found_fields": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of field keys that have been filled."
+            },
+            "missing_fields": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of field keys that are still null."
+            },
+            "message": {
+                "type": "string",
+                "description": "Summary message with found/missing counts."
+            },
+            "next_tool": {
+                "type": "string",
+                "const": "resolve_date",
+                "description": "Always call resolve_date next (CALL 4) — pass date string or empty string."
+            }
+        },
+        "required": ["fields", "found_count", "missing_count", "found_fields", "missing_fields", "message", "next_tool"]
     },
     annotations={
         "title":          "Field Merger",
@@ -122,7 +159,7 @@ def _fixup(fields: dict) -> dict:
         # Already Tamil ("மே") → unchanged ✅
 
     # Fix 2 — AMOUNT_WORDS: strip trailing "மட்டும்" to avoid duplicate
-    # Template already ends with "மட்டும்" — user or Claude may append one too
+    # Template already ends with "மட்டும்" — user or the AI may append one too
     for key in ("AMOUNT_WORDS", "RECEIVED_WORDS", "ADVANCE_WORDS", "BALANCE_WORDS"):
         val = fields.get(key)
         if val and str(val).strip().endswith("மட்டும்"):
@@ -167,6 +204,7 @@ async def handle(arguments: dict) -> list[TextContent]:
             "message": (
                 f"✅ {len(found)} fields found, {len(missing)} still missing. "
                 "Pass these fields to validate_fields next."
-            )
+            ),
+            "next_tool": "resolve_date"
         }, ensure_ascii=False, indent=2)
     )]

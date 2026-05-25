@@ -1,16 +1,7 @@
-TOOL: detect_deed_type
-STEP: CALL 1 of 12
-══════════════════════════════════════
-
+TOOL: detect_deed_type | CALL 1 of 12
 ONE TASK: detect_deed_type tool call மட்டும்.
-
-என்ன செய்:
-  பயனரின் முழு prompt படி → deed_type நீயே தீர்மானி → tool call செய்.
-
-  Agriculture = விவசாய நிலம், ஏக்கர், நஞ்சை, புஞ்சை, survey no, பட்டா
-  Plot        = மனை, site, sqft, door no, ward, layout, residential
-
-tool call செய். முடிந்தது.
-
-⚠️ tool call மட்டும் — அடுத்த call: load_skeleton (CALL 2).
-பயனருக்கு சொல்: "நிலம் வகை: [விவசாய நிலம் / மனை நிலம்] — தயாரிக்கிறோம்."
+பயனர் prompt படி → deed_type தீர்மானி → tool call செய்.
+Agriculture = விவசாய நிலம், ஏக்கர், நஞ்சை, புஞ்சை, survey no, பட்டா
+Plot        = மனை, site, sqft, door no, ward, layout, residential
+பயனருக்கு: "நிலம் வகை: [விவசாய நிலம்/மனை நிலம்] — தயாரிக்கிறோம்."
+→ CALL 2: load_skeleton

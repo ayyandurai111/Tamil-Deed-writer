@@ -51,6 +51,46 @@ TOOL_DEFINITION = Tool(
         },
         "required": ["skeleton", "fields"]
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "clean_skeleton": {
+                "type": "object",
+                "description": "The fully filled and cleaned skeleton JSON. Pass this — not filled_skeleton — to review_draft and generate_docx."
+            },
+            "filled_skeleton": {
+                "type": "object",
+                "description": "Alias for clean_skeleton — kept for API backward compatibility."
+            },
+            "fields_applied": {
+                "type": "integer",
+                "description": "Number of {{PLACEHOLDER}} tokens that were successfully replaced with values."
+            },
+            "placeholders_remaining": {
+                "type": "integer",
+                "description": "Number of {{PLACEHOLDER}} tokens still unfilled (should be 0 if can_generate was true)."
+            },
+            "optional_cleaned": {
+                "type": "integer",
+                "description": "Number of blank optional fields removed during Phase 2 cleanup."
+            },
+            "removed_fields": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of optional field keys that were blanked and removed."
+            },
+            "message": {
+                "type": "string",
+                "description": "Summary: fields applied, placeholders remaining, optional fields cleaned."
+            },
+            "next_tool": {
+                "type": "string",
+                "const": "review_draft",
+                "description": "Always call review_draft next (CALL 7) — pass clean_skeleton."
+            }
+        },
+        "required": ["clean_skeleton", "filled_skeleton", "fields_applied", "placeholders_remaining", "optional_cleaned", "removed_fields", "message", "next_tool"]
+    },
     annotations={
         "title":          "Skeleton Filler + Cleanup",
         "readOnlyHint":   True,
@@ -188,6 +228,7 @@ async def handle(arguments: dict) -> list[TextContent]:
                 f"{remaining} placeholders remaining. "
                 f"{len(removed_fields)} blank optional fields cleaned. "
                 "clean_skeleton-ஐ review_draft-க்கு pass செய்."
-            )
+            ),
+            "next_tool": "review_draft"
         }, ensure_ascii=False, indent=2)
     )]

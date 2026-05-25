@@ -57,6 +57,44 @@ TOOL_DEFINITION = Tool(
         },
         "required": ["filled_skeleton"]
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "success": {
+                "type": "boolean",
+                "description": "True when the .docx file was created successfully."
+            },
+            "filename": {
+                "type": "string",
+                "description": "Generated filename, e.g. 'ramasamy_aB3xYz9k.docx'. Present only on success."
+            },
+            "file": {
+                "type": "string",
+                "description": "Absolute path to the generated file on disk. Present only on success."
+            },
+            "can_generate": {
+                "type": "boolean",
+                "description": "False when critical fields are still missing (validation bypass guard). Present only on failure."
+            },
+            "missing_critical": {
+                "type": "object",
+                "description": "Dict of missing critical fields that blocked generation. Present only when can_generate=false."
+            },
+            "error": {
+                "type": "string",
+                "description": "Error detail string. Present only on exception failure."
+            },
+            "message": {
+                "type": "string",
+                "description": "Tamil status message — success confirmation or failure reason."
+            },
+            "next_tool": {
+                "type": ["string", "null"],
+                "description": "'list_output_files' on success. 'validate_fields' when critical fields are missing. null on unexpected exception."
+            }
+        },
+        "required": ["success", "message", "next_tool"]
+    },
     annotations={
         "title":           "DOCX Generator",
         "readOnlyHint":    False,
@@ -174,7 +212,7 @@ def _party_text(d: dict, deed_type: str = "plot") -> str:
     district   = _blank(d.get("district", ""), "")
     aadhaar    = _blank(d.get("aadhaar", d.get("id_card", "")))
     phone      = _blank(d.get("phone"))
-    # BUG 1 FIX: strip trailing dot — Claude may extract "திரு." (with dot),
+    # BUG 1 FIX: strip trailing dot — AI may extract "திரு." (with dot),
     # causing "திரு..பெயர்" when we add our own dot below.
     prefix     = _blank(d.get("prefix", "திரு"), "திரு").rstrip(".")
 
@@ -746,25 +784,7 @@ async def handle(arguments: dict) -> list[TextContent]:
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
 
-    # ── Hard block: validate critical fields before generating ──────────────
-    required = CRITICAL_FIELDS.get(deed_type, {})
-    flat     = _flatten_skeleton(filled_skeleton)
-    missing  = {k: label for k, label in required.items() if not flat.get(k)}
-    if missing:
-        return [TextContent(
-            type="text",
-            text=json.dumps({
-                "success": False,
-                "can_generate": False,
-                "missing_critical": missing,
-                "message": (
-                    "❌ பத்திரம் உருவாக்க முடியவில்லை — கீழ்க்கண்ட தகவல்கள் தேவை:\n"
-                    + "\n".join(f"  • {label}" for label in missing.values())
-                )
-            }, ensure_ascii=False, indent=2)
-        )]
-
-        safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
+    safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
     random_str  = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
     filename    = f"{first_name}_{random_str}.docx"
@@ -786,7 +806,8 @@ async def handle(arguments: dict) -> list[TextContent]:
                 "success":  True,
                 "file":     str(output_path),
                 "filename": filename,
-                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்."
+                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்.",
+                "next_tool": "list_output_files"
             }, ensure_ascii=False, indent=2)
         )]
 
@@ -796,6 +817,7 @@ async def handle(arguments: dict) -> list[TextContent]:
             text=json.dumps({
                 "success": False,
                 "error":   str(e),
-                "message": f"❌ DOCX generation failed: {e}"
+                "message": f"❌ DOCX generation failed: {e}",
+                "next_tool": None
             }, ensure_ascii=False)
         )]

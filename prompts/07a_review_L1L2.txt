@@ -1,19 +1,5 @@
-TOOL: review_draft
-STEP: CALL 7 of 12
-══════════════════════════════════════
-
+TOOL: review_draft | CALL 7 of 12
 ONE TASK: review_draft tool call மட்டும்.
-
-என்ன செய்:
-  clean_skeleton = Step 6 fill_skeleton result ("clean_skeleton" key)
-  deed_type      = Step 1 result
-
-tool call செய். முடிந்தது.
-
-⚠️ இந்த response-ல் வேறேதும் செய்யாதே.
-   L3 check → CALL 8-ல் தனியாக செய்வாய்.
-   L4 check → CALL 9-ல் தனியாக செய்வாய்.
-   Decision → CALL 10-ல் தனியாக எடுப்பாய்.
-
-பயனருக்கு சொல்:
-  "பத்திர சரிபார்ப்பு துவங்குகிறது (L1+L2)..."
+clean_skeleton = CALL 6 "clean_skeleton" | deed_type = CALL 1 result → tool call செய்.
+பயனருக்கு: "பத்திர சரிபார்ப்பு துவங்குகிறது (L1+L2)..."
+→ CALL 8: L3 check (தனியாக), CALL 9: L4 check (தனியாக), CALL 10: decision (தனியாக)

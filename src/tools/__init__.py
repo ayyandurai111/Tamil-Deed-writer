@@ -6,7 +6,10 @@ Central registry — imports every tool module and exposes:
   TOOL_DEFINITIONS  : list[Tool]   — passed to @server.list_tools()
   TOOL_HANDLERS     : dict         — maps tool name → async handle() function
 
-Workflow (8 tools, 12 calls):
+Compatible with any MCP-capable AI (Claude, ChatGPT, Gemini, LangChain, etc.).
+The AI orchestrates the workflow by calling tools in sequence.
+
+Workflow (9 tools, 12 calls):
   1. detect_deed_type  — agriculture or plot
   2. load_skeleton     — JSON template
   3. extract_fields    — parse + merge fields
@@ -14,8 +17,8 @@ Workflow (8 tools, 12 calls):
   4. validate_fields   — legal check + PAN/TDS
   5. fill_skeleton     — replace {{PLACEHOLDERS}} + cleanup blanks → clean_skeleton
   6. review_draft      — L1+L2 programmatic check on clean_skeleton
-     (CALL 8 = L3 consistency, CALL 9 = L4 grammar — Claude performs these, no tool)
-     (CALL 10 = final decision — Claude, no tool)
+     (CALL 8 = L3 consistency, CALL 9 = L4 grammar — AI performs these, no tool)
+     (CALL 10 = final decision — AI, no tool)
   7. generate_docx     — render .docx (Latha font)  [CALL 11]
   8. list_output_files — download links              [CALL 12]
 """

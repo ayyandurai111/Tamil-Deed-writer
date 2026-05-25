@@ -66,6 +66,71 @@ TOOL_DEFINITION = Tool(
         },
         "required": ["clean_skeleton", "deed_type"]
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "ready_for_docx": {
+                "type": "boolean",
+                "description": "True only when L1+L2 critical_count=0. Still perform L3+L4 AI checks before calling generate_docx."
+            },
+            "critical_count": {
+                "type": "integer",
+                "description": "Number of critical errors from L1 (placeholder leaks) and L2 (legal checks)."
+            },
+            "warning_count": {
+                "type": "integer",
+                "description": "Number of non-blocking warnings from L3 (consistency) and L4 (structure)."
+            },
+            "summary": {
+                "type": "string",
+                "description": "Human-readable Tamil summary of the review result."
+            },
+            "layers": {
+                "type": "object",
+                "description": "Per-layer review results.",
+                "properties": {
+                    "L1_placeholders": {
+                        "type": "object",
+                        "properties": {
+                            "passed": {"type": "boolean"},
+                            "errors": {"type": "array", "items": {"type": "object"}}
+                        },
+                        "required": ["passed", "errors"]
+                    },
+                    "L2_legal": {
+                        "type": "object",
+                        "properties": {
+                            "passed": {"type": "boolean"},
+                            "errors": {"type": "array", "items": {"type": "object"}}
+                        },
+                        "required": ["passed", "errors"]
+                    },
+                    "L3_consistency": {
+                        "type": "object",
+                        "properties": {
+                            "passed": {"type": "boolean"},
+                            "warnings": {"type": "array", "items": {"type": "object"}}
+                        },
+                        "required": ["passed", "warnings"]
+                    },
+                    "L4_structure": {
+                        "type": "object",
+                        "properties": {
+                            "passed": {"type": "boolean"},
+                            "errors": {"type": "array", "items": {"type": "object"}}
+                        },
+                        "required": ["passed", "errors"]
+                    }
+                },
+                "required": ["L1_placeholders", "L2_legal", "L3_consistency", "L4_structure"]
+            },
+            "next_tool": {
+                "type": "string",
+                "description": "'ai:l3_consistency_check' when critical_count=0 (proceed to AI L3 analysis). 'fill_skeleton' when critical_count>0 (loop back to fix critical errors)."
+            }
+        },
+        "required": ["ready_for_docx", "critical_count", "warning_count", "summary", "layers", "next_tool"]
+    },
     annotations={
         "title":          "Skeleton Reviewer",
         "readOnlyHint":   True,
@@ -290,14 +355,19 @@ def _layer4_structure(skeleton: dict, deed_type: str) -> dict:
             return len(val) > 0
         return True
 
-    # Required top-level sections
-    required_sections = [
-        ("title",          "title"),
-        ("section_4_text", "Section 4 — விற்பவர் உரிமை அறிவிப்பு"),
-        ("section_8_text", "Section 8 — ஆட்சி ஒப்படைப்பு"),
-        ("closing_text",   "Closing text"),
-        ("disclaimer",     "Disclaimer"),
-    ]
+    # Required top-level sections (deed-type aware)
+    required_sections = [("title", "title"), ("closing_text", "Closing text")]
+    if deed_type == "agriculture":
+        required_sections += [
+            ("section_4_text", "Section 4 — விற்பவர் உரிமை அறிவிப்பு"),
+            ("section_8_text", "Section 8 — ஆட்சி ஒப்படைப்பு"),
+            ("disclaimer",     "Disclaimer"),
+        ]
+    if deed_type == "plot":
+        required_sections += [
+            ("ownership_clause",  "Ownership clause"),
+            ("possession_clause", "Possession clause"),
+        ]
     for key, label in required_sections:
         if not _present(skeleton.get(key)):
             errors.append({
@@ -365,6 +435,7 @@ async def handle(arguments: dict) -> list[TextContent]:
     else:
         summary = f"❌ {critical_count} critical தவறுகள் — திருத்தியபின் மட்டுமே தொடரவும்."
 
+    next_tool = "ai:l3_consistency_check" if critical_count == 0 else "fill_skeleton"
     return [TextContent(
         type="text",
         text=json.dumps({
@@ -377,6 +448,7 @@ async def handle(arguments: dict) -> list[TextContent]:
                 "L2_legal":        l2,
                 "L3_consistency":  l3,
                 "L4_structure":    l4,
-            }
+            },
+            "next_tool": next_tool
         }, ensure_ascii=False, indent=2)
     )]

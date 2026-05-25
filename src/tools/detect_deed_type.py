@@ -3,10 +3,10 @@ tools/detect_deed_type.py
 =========================
 Tool 1 — detect_deed_type
 
-Claude (the orchestrating AI) reads the user prompt and determines deed type.
-This tool receives Claude's determination, validates it, and returns it.
+The orchestrating AI reads the user prompt and determines deed type.
+This tool receives the AI's determination, validates it, and returns it.
 
-No keyword scoring. Claude reads context, not keywords.
+No keyword scoring. The AI reads context, not keywords.
 
 Annotation:
   readOnlyHint   = True
@@ -20,7 +20,7 @@ TOOL_DEFINITION = Tool(
     name="detect_deed_type",
     description=(
         "[CALL 1 of 12] ONE TASK: இந்த tool call மட்டும்.  "
-        "YOU (Claude) read the user prompt and determine the deed type yourself. "
+        "YOU (the AI) read the user prompt and determine the deed type yourself. "
         "Then call this tool with your determination. "
 
         "HOW TO DETERMINE: "
@@ -42,7 +42,7 @@ TOOL_DEFINITION = Tool(
             "deed_type": {
                 "type": "string",
                 "enum": ["agriculture", "plot"],
-                "description": "The deed type YOU determined from the user prompt."
+                "description": "The deed type YOU (the AI) determined from the user prompt."
             },
             "reason": {
                 "type": "string",
@@ -50,6 +50,34 @@ TOOL_DEFINITION = Tool(
             }
         },
         "required": ["deed_type"]
+    },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "deed_type": {
+                "type": "string",
+                "enum": ["agriculture", "plot"],
+                "description": "Validated deed type: 'agriculture' or 'plot'."
+            },
+            "label": {
+                "type": "string",
+                "description": "Tamil label: 'விவசாய நிலம்' or 'மனை நிலம்'."
+            },
+            "reason": {
+                "type": "string",
+                "description": "Reason the deed type was chosen."
+            },
+            "message": {
+                "type": "string",
+                "description": "Confirmation message."
+            },
+            "next_tool": {
+                "type": "string",
+                "const": "load_skeleton",
+                "description": "Always call load_skeleton next (CALL 2)."
+            }
+        },
+        "required": ["deed_type", "label", "message", "next_tool"]
     },
     annotations={
         "title":          "Deed Type Validator",
@@ -75,6 +103,7 @@ async def handle(arguments: dict) -> list[TextContent]:
             "deed_type": deed_type,
             "label":     label,
             "reason":    reason,
-            "message":   f"Deed type confirmed: {deed_type} ({label})"
+            "message":   f"Deed type confirmed: {deed_type} ({label})",
+            "next_tool": "load_skeleton"
         }, ensure_ascii=False, indent=2)
     )]

@@ -4,9 +4,11 @@ server.py
 =========
 Tamil Sale Deed MCP Server — core MCP server instance.
 
+Compatible with any MCP-capable AI client (Claude, ChatGPT, Gemini, etc.).
+
 Imported by:
   - main.py      → HTTP/SSE deployment (Render, cloud)
-  - run_stdio.py → Local Claude Desktop stdio mode
+  - run_stdio.py → Local stdio mode (Claude Desktop or other local AI clients)
 """
 
 import sys

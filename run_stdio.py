@@ -2,15 +2,16 @@
 """
 run_stdio.py
 ============
-Local Claude Desktop entry point — stdio transport.
+Local stdio entry point — for Claude Desktop or any local MCP-capable AI client.
 
-Use this when running locally with Claude Desktop.
+Use this for any local AI client that supports MCP stdio transport.
 For Render / cloud deployment, use main.py instead.
 
 Usage:
   python3 run_stdio.py
 
-Claude Desktop config (claude_desktop_config.json):
+Claude Desktop config (claude_desktop_config.json) — also works as a template
+for any local MCP client config:
   {
     "mcpServers": {
       "tamil-deed-writer": {

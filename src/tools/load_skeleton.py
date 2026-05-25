@@ -35,6 +35,30 @@ TOOL_DEFINITION = Tool(
         },
         "required": ["deed_type"]
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "skeleton": {
+                "type": "object",
+                "description": "The blank JSON template with {{PLACEHOLDER}} fields for the deed type."
+            },
+            "deed_type": {
+                "type": "string",
+                "enum": ["agriculture", "plot"],
+                "description": "The deed type the skeleton was loaded for."
+            },
+            "message": {
+                "type": "string",
+                "description": "Confirmation message."
+            },
+            "next_tool": {
+                "type": "string",
+                "const": "extract_fields",
+                "description": "Always call extract_fields next (CALL 3)."
+            }
+        },
+        "required": ["skeleton", "deed_type", "message", "next_tool"]
+    },
     annotations={
         "title":          "Skeleton Loader",
         "readOnlyHint":   True,
@@ -50,7 +74,8 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     if not template_file.exists():
         return [TextContent(type="text", text=json.dumps({
-            "error": f"Template not found: {template_file}"
+            "error": f"Template not found: {template_file}",
+            "next_tool": None
         }))]
 
     with open(template_file, "r", encoding="utf-8") as f:
@@ -61,6 +86,7 @@ async def handle(arguments: dict) -> list[TextContent]:
         text=json.dumps({
             "skeleton":  skeleton,
             "deed_type": deed_type,
-            "message":   f"Skeleton loaded for: {deed_type}"
+            "message":   f"Skeleton loaded for: {deed_type}",
+            "next_tool": "extract_fields"
         }, ensure_ascii=False, indent=2)
     )]

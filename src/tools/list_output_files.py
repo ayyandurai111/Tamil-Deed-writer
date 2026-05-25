@@ -30,6 +30,43 @@ TOOL_DEFINITION = Tool(
         "type": "object",
         "properties": {}
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "files": {
+                "type": "array",
+                "description": "List of generated .docx files, newest first.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filename":     {"type": "string", "description": "Filename on disk."},
+                        "size_kb":      {"type": "number",  "description": "File size in kilobytes."},
+                        "created":      {"type": "string",  "description": "Creation timestamp (YYYY-MM-DD HH:MM:SS)."},
+                        "download_url": {"type": "string",  "description": "Full URL to download this file."}
+                    },
+                    "required": ["filename", "size_kb", "created", "download_url"]
+                }
+            },
+            "total_files": {
+                "type": "integer",
+                "description": "Total number of generated files."
+            },
+            "output_dir": {
+                "type": "string",
+                "description": "Absolute path to the output directory on the server."
+            },
+            "message": {
+                "type": "string",
+                "description": "Tamil message with file count."
+            },
+            "next_tool": {
+                "type": "null",
+                "const": None,
+                "description": "Workflow is complete. No further tool call needed."
+            }
+        },
+        "required": ["files", "total_files", "output_dir", "message", "next_tool"]
+    },
     annotations={
         "title":          "Output File Lister",
         "readOnlyHint":   True,
@@ -60,5 +97,6 @@ async def handle(arguments: dict) -> list[TextContent]:
             "total_files": len(file_list),
             "output_dir":  str(OUTPUT_DIR),
             "message":     f"📁 {len(file_list)} பத்திரங்கள் கண்டுபிடிக்கப்பட்டன.",
+            "next_tool":   None
         }, ensure_ascii=False, indent=2)
     )]

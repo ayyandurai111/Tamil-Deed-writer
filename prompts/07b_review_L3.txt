@@ -1,22 +1,6 @@
-STEP: CALL 8 of 12 — L3 CONSISTENCY CHECK ONLY
-══════════════════════════════════════
-
-ONE TASK: L3 consistency மட்டும் சரிபார்.
-
-CALL 7 (review_draft tool) result-ஐ வைத்துக்கொண்டு, இப்போது L3 மட்டும்:
-
-சரிபார்க்க வேண்டியது:
-  ✅ மாவட்டம் — header vs property — ஒரே மாதிரி உள்ளதா?
-  ✅ ஊர் / தாலுக்கா பெயர் — முழு document-ல் consistent-ஆ?
-  ✅ AMOUNT_WORDS — எண்ணுடன் பொருந்துகிறதா? (லட்சம் / கோடி சரியா?)
-  ✅ Vendor பெயர் — document முழுவதும் ஒரே மாதிரி?
-  ✅ Purchaser பெயர் — document முழுவதும் ஒரே மாதிரி?
-  ✅ Vendor prefix (திரு/திருமதி/செல்வி) — gender சரியா?
-
-முடிந்ததும் result மட்டும் எழுது:
-  "L3 சரிபார்ப்பு முடிந்தது:
-   ✅ [pass ஆனவை]
-   ⚠️ [warnings இருந்தால்]"
-
-⚠️ L4 இந்த call-ல் செய்யாதே — CALL 9-ல் தனியாக வரும்.
-⚠️ Decision இந்த call-ல் எடுக்காதே — CALL 10-ல் தனியாக வரும்.
+CALL 8 of 12 — L3 CONSISTENCY CHECK மட்டும்
+ONE TASK: L3 மட்டும். L4 அல்லது decision இந்த call-ல் செய்யாதே.
+சரிபார்க்க: மாவட்டம்/ஊர் consistent?, AMOUNT_WORDS எண் பொருந்துகிறதா?,
+Vendor/Purchaser பெயர்கள் consistent?, Vendor prefix gender சரியா?
+முடிந்ததும்: "L3 சரிபார்ப்பு முடிந்தது: ✅ [pass] ⚠️ [warnings]"
+→ CALL 9: L4 check

@@ -7,9 +7,15 @@ Tamil Sale Deed MCP Server — Render / HTTP deployment entry point.
 Exposes the MCP server over HTTP using SSE (Server-Sent Events) transport,
 which is the standard for remote MCP deployments.
 
+Compatible with any MCP-capable AI client:
+  • Claude (Anthropic) — Claude Desktop, Claude.ai
+  • OpenAI ChatGPT (with MCP plugin support)
+  • Google Gemini (with MCP support)
+  • Any LLM framework supporting the MCP protocol (LangChain, LlamaIndex, etc.)
+
 Endpoints:
   GET  /          → Health check + server info
-  GET  /sse       → MCP SSE connection (Claude connects here)
+  GET  /sse       → MCP SSE connection (AI client connects here)
   POST /messages/ → MCP message posting (used by SSE transport internally)
   GET  /download/{filename} → Download a generated .docx file
   GET  /files     → List all generated .docx files
@@ -43,7 +49,7 @@ sse_transport = SseServerTransport("/messages/")
 
 
 async def handle_sse(request):
-    """MCP SSE connection handler — Claude connects here."""
+    """MCP SSE connection handler — AI client connects here."""
     async with sse_transport.connect_sse(
         request.scope, request.receive, request._send
     ) as streams:
@@ -66,8 +72,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Tamil Sale Deed MCP Server",
-    description="AI-powered Tamil Sale Deed generator via MCP protocol",
-    version="7.0.0",
+    description=(
+        "AI-powered Tamil Sale Deed generator via MCP protocol. "
+        "Compatible with Claude, ChatGPT, Gemini, and any MCP-capable AI client."
+    ),
+    version="8.0.0",
     lifespan=lifespan,
 )
 
@@ -79,9 +88,10 @@ async def health():
     return {
         "status":  "ok",
         "server":  "tamil-deed-writer",
-        "version": "7.0.0",
+        "version": "8.0.0",
         "tools":   len(TOOL_DEFINITIONS),
         "mcp_sse": "/sse",
+        "ai_support": ["claude", "chatgpt", "gemini", "any-mcp-client"],
         "message": "Tamil Sale Deed MCP Server is running 🏡",
     }
 

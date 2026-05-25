@@ -46,6 +46,45 @@ TOOL_DEFINITION = Tool(
         },
         "required": ["deed_type", "fields"]
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "missing_critical": {
+                "type": "object",
+                "description": "Dict of missing critical fields: {field_key: tamil_label_with_law_reference}. Empty when can_generate=true."
+            },
+            "missing_count": {
+                "type": "integer",
+                "description": "Number of critical fields still missing."
+            },
+            "pan_required": {
+                "type": "boolean",
+                "description": "True when transaction amount >= ₹10 lakh — PAN is mandatory (IT Rule 114B)."
+            },
+            "tds_required": {
+                "type": "boolean",
+                "description": "True when transaction amount >= ₹50 lakh — buyer must deduct 1% TDS (IT S.194-IA)."
+            },
+            "pan_block": {
+                "type": "boolean",
+                "description": "True when PAN is required but not yet provided. HARD BLOCK — do not call fill_skeleton until false."
+            },
+            "can_generate": {
+                "type": "boolean",
+                "description": "True only when ALL critical fields are present and pan_block=false. Safe to proceed to fill_skeleton."
+            },
+            "pan_tds_notes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Tamil advisory notes about PAN / TDS obligations."
+            },
+            "next_tool": {
+                "type": "string",
+                "description": "Conditional next step. 'fill_skeleton' when can_generate=true. 'user:ask_missing_fields' when can_generate=false and pan_block=false. 'user:ask_pan_number' when pan_block=true."
+            }
+        },
+        "required": ["missing_critical", "missing_count", "pan_required", "tds_required", "pan_block", "can_generate", "pan_tds_notes", "next_tool"]
+    },
     annotations={
         "title":          "Legal Field Validator",
         "readOnlyHint":   True,
@@ -101,7 +140,7 @@ def run_validation(deed_type: str, fields: dict) -> dict:
     if pan_needed:
         if deed_type == "agriculture":
             # BUG FIX 3: Agriculture also accepts PAN embedded in VENDOR_AADHAAR
-            # or any related field Claude may have stored it in, not only VENDOR_PAN.
+            # or any related field the AI may have stored it in, not only VENDOR_PAN.
             # Primary check: dedicated VENDOR_PAN / PURCHASER_PAN fields.
             # Fallback: search regex in VENDOR_AADHAAR field (some users give
             # "Aadhaar: 1234..., PAN: ABCDE1234F" as a combined string).
@@ -136,7 +175,7 @@ def run_validation(deed_type: str, fields: dict) -> dict:
 
     pan_fields_missing = any("PAN" in k for k in missing)
 
-    # BUG FIX 5: When pan_block=True, add an explicit BLOCK note so Claude cannot
+    # BUG FIX 5: When pan_block=True, add an explicit BLOCK note so the AI cannot
     # misread the advisory notes as permission to proceed to fill_skeleton.
     if pan_needed and pan_fields_missing:
         notes.append("🚫 pan_block=True — PAN எண் இல்லாமல் fill_skeleton செல்லாதே. PAN கேள், பின் validate_fields மீண்டும்.")
@@ -146,7 +185,7 @@ def run_validation(deed_type: str, fields: dict) -> dict:
         "missing_count":    len(missing),
         "pan_required":     pan_needed,
         "tds_required":     tds_needed,
-        # BUG 3 FIX: explicit pan_block flag so Claude cannot confuse
+        # BUG 3 FIX: explicit pan_block flag so the AI cannot confuse
         # "show pan_tds_notes" advisory with "PAN field is still missing".
         "pan_block":        pan_needed and pan_fields_missing,
         "can_generate":     len(missing) == 0,
@@ -161,6 +200,13 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     result = run_validation(deed_type, fields)
 
+    # Compute next_tool from result
+    if result["pan_block"]:
+        result["next_tool"] = "user:ask_pan_number"
+    elif result["can_generate"]:
+        result["next_tool"] = "fill_skeleton"
+    else:
+        result["next_tool"] = "user:ask_missing_fields"
     return [TextContent(
         type="text",
         text=json.dumps(result, ensure_ascii=False, indent=2)

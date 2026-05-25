@@ -63,6 +63,46 @@ TOOL_DEFINITION = Tool(
         },
         "required": []
     },
+    outputSchema={
+        "type": "object",
+        "properties": {
+            "DATE_DAY": {
+                "type": "string",
+                "description": "Day as string, e.g. '18'."
+            },
+            "DATE_MONTH": {
+                "type": "string",
+                "description": "Month as Tamil name, e.g. 'மே'."
+            },
+            "DATE_YEAR": {
+                "type": "string",
+                "description": "Four-digit year, e.g. '2026'."
+            },
+            "DATE_MONTH_TAMIL": {
+                "type": "string",
+                "description": "Same as DATE_MONTH — kept for template compatibility."
+            },
+            "DATE_FULL": {
+                "type": "string",
+                "description": "Full date in DD/MM/YYYY format, e.g. '18/05/2026'."
+            },
+            "source": {
+                "type": "string",
+                "enum": ["today_default", "user_provided"],
+                "description": "'today_default' when no date was given; 'user_provided' when user specified a date."
+            },
+            "message": {
+                "type": "string",
+                "description": "Tamil message explaining which date was used and why."
+            },
+            "next_tool": {
+                "type": "string",
+                "const": "validate_fields",
+                "description": "Always call validate_fields next (CALL 5) — merge date fields into existing fields dict."
+            }
+        },
+        "required": ["DATE_DAY", "DATE_MONTH", "DATE_YEAR", "DATE_FULL", "source", "message", "next_tool"]
+    },
     annotations={
         "title":          "Deed Date Resolver",
         "readOnlyHint":   True,
@@ -301,6 +341,7 @@ async def handle(arguments: dict) -> list[TextContent]:
     user_input = arguments.get("user_input", "")
     result     = parse_date(user_input)
 
+    result["next_tool"] = "validate_fields"
     return [TextContent(
         type="text",
         text=json.dumps(result, ensure_ascii=False, indent=2)
