@@ -34,7 +34,7 @@ sys.path.insert(0, str(SRC_DIR))
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, Response
 import uvicorn
 
 from mcp.server.sse import SseServerTransport

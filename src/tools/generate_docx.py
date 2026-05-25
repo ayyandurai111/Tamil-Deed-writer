@@ -15,14 +15,12 @@ Professional Tamil Sale Deed layout:
 """
 
 import json
-import secrets
-import string
 from datetime import datetime
 from pathlib import Path
 from mcp.types import Tool, TextContent
 
 from docx import Document
-from docx.shared import Pt, Cm, RGBColor
+from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
@@ -53,6 +51,10 @@ TOOL_DEFINITION = Tool(
                 "type": "string",
                 "description": "Optional prefix for the output filename (e.g. 'raman_karthik').",
                 "default": "deed"
+            },
+            "session_id": {
+                "type": "string",
+                "description": "Unique session/user ID. Files saved under OUTPUT_DIR/session_id/. Use same value in list_output_files."
             }
         },
         "required": ["filled_skeleton"]
@@ -786,8 +788,8 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
-    random_str  = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
-    filename    = f"{first_name}_{random_str}.docx"
+    timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S_%f")   # %f = microseconds → unique per user
+    filename    = f"{first_name}_{timestamp}.docx"
     output_path = OUTPUT_DIR / filename
 
     try:

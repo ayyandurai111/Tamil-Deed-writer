@@ -97,6 +97,8 @@ async def handle(arguments: dict) -> list[TextContent]:
 
     label = "விவசாய நிலம்" if deed_type == "agriculture" else "மனை நிலம்"
 
+    # Returns TextContent with JSON — server.py automatically promotes this
+    # to structuredContent when outputSchema is defined on the tool.
     return [TextContent(
         type="text",
         text=json.dumps({
