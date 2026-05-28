@@ -24,14 +24,15 @@ from constants import OPTIONAL_FIELDS
 TOOL_DEFINITION = Tool(
     name="fill_skeleton",
     description=(
-        "[CALL 6 of 12] ONE TASK: இந்த tool call மட்டும். skeleton template-இல் உள்ள எல்லா {{PLACEHOLDER}}-ஐயும் "
-        "fields-இல் உள்ள values-ஆல் மாற்று. "
-        "skeleton = Step 2 load_skeleton result. "
-        "fields = validate_fields pass ஆன முழு dict. "
-        "Phase 1: placeholders replace. "
-        "Phase 2: blank optional fields → None, blank list entries → removed (auto cleanup). "
-        "clean_skeleton-ஐ மட்டும் review_draft மற்றும் generate_docx-க்கு pass செய். "
-        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): review_draft (CALL 7). பயனருக்கு சொல்: பத்திர வரைவு தயாரிக்கிறேன்..."
+        "[CALL 6 of 12] ONE TASK: call this tool only. "
+        "Pass skeleton (CALL 2 result) and fields (validate_fields passed dict). "
+        "This tool runs two phases internally: "
+        "Phase 1 — replaces all {{PLACEHOLDER}} tokens with field values. "
+        "Phase 2 — cleans up: blank optional fields → None, empty list entries → removed. "
+        "IMPORTANT: store only the 'clean_skeleton' key from the result. "
+        "Pass clean_skeleton (not the full result) to both review_draft (CALL 7) and generate_docx (CALL 11). "
+        "Tell user: 'பத்திர வரைவு தயாரிக்கிறேன்...' "
+        "Next separate response: CALL 7 review_draft."
     ),
     inputSchema={
         "type": "object",

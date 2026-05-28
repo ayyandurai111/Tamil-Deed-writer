@@ -9,18 +9,22 @@ Central registry — imports every tool module and exposes:
 Compatible with any MCP-capable AI (Claude, ChatGPT, Gemini, LangChain, etc.).
 The AI orchestrates the workflow by calling tools in sequence.
 
-Workflow (9 tools, 12 calls):
-  1. detect_deed_type  — agriculture or plot
-  2. load_skeleton     — JSON template
-  3. extract_fields    — parse + merge fields
-  3b. resolve_date     — date → Tamil names
-  4. validate_fields   — legal check + PAN/TDS
-  5. fill_skeleton     — replace {{PLACEHOLDERS}} + cleanup blanks → clean_skeleton
-  6. review_draft      — L1+L2 programmatic check on clean_skeleton
-     (CALL 8 = L3 consistency, CALL 9 = L4 grammar — AI performs these, no tool)
-     (CALL 10 = final decision — AI, no tool)
-  7. generate_docx     — render .docx (Latha font)  [CALL 11]
-  8. list_output_files — download links              [CALL 12]
+WORKFLOW — 9 tools, 12 calls total:
+  CALL 1  [TOOL] detect_deed_type   — determine agriculture or plot
+  CALL 2  [TOOL] load_skeleton      — load JSON template
+  CALL 3  [TOOL] extract_fields     — AI extracts fields from user text, tool merges
+  CALL 4  [TOOL] resolve_date       — parse date → Tamil day/month/year
+  CALL 5  [TOOL] validate_fields    — legal checks + PAN/TDS rules
+  CALL 6  [TOOL] fill_skeleton      — replace {{PLACEHOLDERS}} → clean_skeleton
+  CALL 7  [TOOL] review_draft       — L1+L2 programmatic checks on clean_skeleton
+  CALL 8  [AI ANALYSIS — NO TOOL]   — AI performs L3 consistency check
+  CALL 9  [AI ANALYSIS — NO TOOL]   — AI performs L4 grammar check
+  CALL 10 [AI DECISION — NO TOOL]   — AI combines CALL 7+8+9 → final go/no-go
+  CALL 11 [TOOL] generate_docx      — render .docx (Latha font)
+  CALL 12 [TOOL] list_output_files  — return download URL
+
+IMPORTANT: CALL 8, 9, 10 are NOT tool calls. They are AI text responses.
+No tools exist for these steps. The AI performs them as analysis between CALL 7 and CALL 11.
 """
 
 from tools import (

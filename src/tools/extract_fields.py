@@ -18,33 +18,21 @@ from constants import CRITICAL_FIELDS, TAMIL_MONTHS
 TOOL_DEFINITION = Tool(
     name="extract_fields",
     description=(
-        "[CALL 3 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "YOU (the AI) — read the user's raw prompt yourself and extract all deed fields. "
-        "Then call this tool with what you found. "
-        "DO NOT pass the raw prompt here — extract first, then call. "
+        "[CALL 3 of 12] ONE TASK: call this tool only. "
+        "Before calling — YOU extract all fields from the user's text. Pass what you found to this tool. "
+        "Do NOT pass the raw user prompt — extract first, then call. "
 
-        "HOW TO CALL: "
-        "extracted_fields = every field key you could find, null for anything missing. "
-        "existing_fields  = fields collected in previous turns (empty on first call). "
+        "WHAT TO EXTRACT: "
+        "VENDOR_NAME / VENDOR_FATHER / VENDOR_AGE / VENDOR_ADDRESS / VENDOR_AADHAAR(12 digits) / VENDOR_PHONE / VENDOR_PREFIX. "
+        "PURCHASER_NAME / PURCHASER_FATHER / PURCHASER_AGE / PURCHASER_ADDRESS / PURCHASER_AADHAAR(12 digits) / PURCHASER_PHONE / PURCHASER_PREFIX. "
+        "DATE_DAY / DATE_MONTH(Tamil: ஜனவரி…டிசம்பர்) / DATE_YEAR. "
+        "TOTAL_AMOUNT(digits only, strip commas). NANJAI_OR_PUNJAI(exact Tamil word from text). Other deed fields. "
+        "Field not in text → null. Never guess or fabricate. All keys UPPERCASE. "
 
-        "EXTRACTION RULES (apply before calling): "
-        "(1) Vendor = விற்பவர் / seller / grantor. "
-        "(2) Purchaser = வாங்குபவர் / buyer / grantee. "
-        "(3) DATE_DAY / DATE_MONTH / DATE_YEAR — split the date into three parts. "
-        "    DATE_MONTH must always be Tamil name: ஜனவரி பிப்ரவரி மார்ச் ஏப்ரல் மே ஜூன் ஜூலை ஆகஸ்ட் செப்டம்பர் அக்டோபர் நவம்பர் டிசம்பர். "
-        "    உதாரணம்: '14/05/2026' → DATE_MONTH='மே', '14 May 2026' → DATE_MONTH='மே'. "
-        "    (If you pass a number or English name, _fixup will auto-convert — but prefer Tamil directly.) "
-        "(4) AADHAAR — 12 digits only, strip spaces and dashes. "
-        "(5) TOTAL_AMOUNT — digits only, strip commas. "
-        "(6) NANJAI_OR_PUNJAI — use exact Tamil word found in text. "
-        "(7) If a field is not mentioned in the prompt → set it to null. Never guess. "
-        "(8) All keys MUST be UPPERCASE (e.g. VENDOR_NAME not vendor_name). "
+        "Loop call: extracted_fields = new reply only; existing_fields = full accumulated dict from all turns. "
+        "This tool merges: existing non-null values are never overwritten. "
 
-        "MERGE RULE (this tool handles it): "
-        "existing non-null values are never overwritten. "
-        "new non-null values fill in null slots only. "
-
-        "tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): resolve_date (CALL 4) — date இருந்தால் அது pass செய், இல்லாவிட்டால் '' pass செய். ALWAYS call."
+        "Next separate response: CALL 4 resolve_date — ALWAYS call; pass date text or '' if none given."
     ),
     inputSchema={
         "type": "object",

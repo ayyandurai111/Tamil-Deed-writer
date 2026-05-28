@@ -1,14 +1,17 @@
-TOOL: validate_fields | CALL 5 of 12
-ONE TASK: validate_fields tool call மட்டும்.
-deed_type = CALL 1 result | fields = extract_fields + resolve_date merge ஆன முழு dict → tool call செய்.
+[CALL 5 of 12] [TOOL: validate_fields]
+ONE TASK: call validate_fields tool only.
+Pass deed_type (CALL 1) and fields dict (extract_fields + resolve_date merged).
 
-result பார்த்து:
-CASE A — can_generate=True → CALL 6: fill_skeleton
-CASE B — can_generate=False → user-ஐ கேள்:
-  "பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை:
-   1. [field]? 2. [field]?"
-  reply பெற்றால்: CALL 5b extract_fields → CALL 5c resolve_date → CALL 5d validate_fields (LOOP)
-CASE C — pan_block=True → PAN மட்டும் கேள்:
-  "விற்பனை தொகை ₹10 லட்சத்திற்கு மேல் — PAN கட்டாயம்:
-   விற்பவர் PAN: ? வாங்குபவர் PAN: ?"
-  pan_block=True ஆக இருக்கும் வரை fill_skeleton செல்லாதே.
+After tool returns:
+  CASE A — can_generate=True, pan_block=False
+    → Next separate response: CALL 6 fill_skeleton
+
+  CASE B — can_generate=False  [NO TOOL — ask user]
+    → Ask: "பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை:
+            1. [field]?  2. [field]? ..."
+    → After reply: loop CALL 3 → CALL 4 → CALL 5
+
+  CASE C — pan_block=True  [NO TOOL — ask user]
+    → Ask: "விற்பனை தொகை ₹10 லட்சத்திற்கு மேல் — PAN கட்டாயம்:
+            விற்பவர் PAN: ?  வாங்குபவர் PAN: ?"
+    → Do NOT proceed to fill_skeleton while pan_block=True. Loop CALL 5.

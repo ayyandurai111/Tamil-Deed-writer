@@ -1,9 +1,12 @@
-TOOL: extract_fields | CALL 3 of 12
-ONE TASK: extract_fields tool call மட்டும்.
-tool call முன்: பயனர் prompt படி → fields extract செய் → dict → tool-க்கு pass செய்.
-Extract: VENDOR_NAME/FATHER/AGE/ADDRESS/AADHAAR(12 digits)/PHONE/PREFIX,
-         PURCHASER_NAME/FATHER/AGE/ADDRESS/AADHAAR(12 digits)/PHONE/PREFIX,
-         DATE_DAY/MONTH(Tamil)/YEAR, TOTAL_AMOUNT(digits only), NANJAI_OR_PUNJAI, மற்ற fields.
-text-இல் இல்லாதது → null (கற்பனை செய்யாதே).
-Loop call: extracted_fields=புதிய reply மட்டும், existing_fields=முழு dict.
-→ CALL 4: resolve_date
+[CALL 3 of 12] [TOOL: extract_fields]
+ONE TASK: call extract_fields tool only.
+
+Before calling — YOU extract from user text:
+  VENDOR_NAME / FATHER / AGE / ADDRESS / AADHAAR(12 digits) / PHONE / PREFIX
+  PURCHASER_NAME / FATHER / AGE / ADDRESS / AADHAAR(12 digits) / PHONE / PREFIX
+  DATE_DAY / DATE_MONTH(Tamil name) / DATE_YEAR
+  TOTAL_AMOUNT(digits only) / NANJAI_OR_PUNJAI / other fields
+  Not in text → null. Never guess.
+  Loop call: extracted_fields = new reply only; existing_fields = full accumulated dict.
+
+→ Next separate response: CALL 4 resolve_date

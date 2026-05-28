@@ -1,6 +1,6 @@
-TOOL: fill_skeleton | CALL 6 of 12
-ONE TASK: fill_skeleton tool call மட்டும்.
-skeleton = CALL 2 result | fields = validate_fields pass ஆன முழு dict → tool call செய்.
-return-ல் "clean_skeleton" key மட்டும் CALL 7+11-க்கு pass செய்.
-பயனருக்கு: "பத்திர வரைவு தயாரிக்கிறேன்..."
-→ CALL 7: review_draft
+[CALL 6 of 12] [TOOL: fill_skeleton]
+ONE TASK: call fill_skeleton tool only.
+Pass skeleton (CALL 2 result) and fields (validate_fields passed dict).
+Store ONLY the "clean_skeleton" key from the result — pass this to CALL 7 and CALL 11.
+Tell user: "பத்திர வரைவு தயாரிக்கிறேன்..."
+→ Next separate response: CALL 7 review_draft

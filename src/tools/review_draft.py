@@ -37,19 +37,22 @@ from mcp.types import Tool, TextContent
 TOOL_DEFINITION = Tool(
     name="review_draft",
     description=(
-        "[CALL 7 of 12] ONE TASK: இந்த tool call மட்டும் (L1+L2 programmatic check). "
-        "fill_skeleton clean_skeleton result-ஐ pass செய். tool call முடிந்தவுடன் response முடிந்தது. "
+        "[CALL 7 of 12] ONE TASK: call this tool only. "
+        "Pass clean_skeleton (CALL 6 'clean_skeleton' key) and deed_type (CALL 1 result). "
 
-        "── TOOL செய்வது (L1 + L2 + L3 + L4) ─── "
-        "இந்த tool L1+L2 மட்டும் programmatic-ஆக check செய்யும். L3+L4 = அடுத்த calls-ல். "
+        "WHAT THIS TOOL DOES: L1 + L2 programmatic checks only. "
+        "L1 = detects any {{PLACEHOLDER}} tokens still remaining (placeholder leak). "
+        "L2 = validates legal fields: Aadhaar digits, PAN format, date validity, boundary completeness. "
+        "This tool does NOT perform L3 or L4 — those are YOUR analysis steps after this call. "
 
-        "── L1+L2 RESULT மட்டும் return ஆகும் ─── "
-        "ready_for_docx result-ஐ வைத்துக்கொள் — CALL 10 final decision-க்கு தேவை. "
-        "L3+L4 results + ready_for_docx சேர்த்து CALL 10-ல் மட்டும் decide செய். "
-        ""
-        ""
-        ""
-        ""
+        "After tool returns: store the ready_for_docx value — needed for your CALL 10 decision. "
+        "Tell user: 'பத்திர சரிபார்ப்பு (L1+L2) துவங்குகிறது...' "
+
+        "What comes next (in separate responses — NO tool calls): "
+        "CALL 8 = YOUR L3 consistency analysis (you read clean_skeleton, check consistency). "
+        "CALL 9 = YOUR L4 grammar analysis (you read clean_skeleton, check Tamil prose). "
+        "CALL 10 = YOUR final decision combining CALL 7 + CALL 8 + CALL 9 results. "
+        "CALL 8, 9, 10 are NOT tools — they are your own text analysis responses."
     ),
     inputSchema={
         "type": "object",

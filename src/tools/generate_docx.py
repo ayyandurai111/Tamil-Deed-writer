@@ -32,13 +32,22 @@ from file_store import put as _mem_store
 TOOL_DEFINITION = Tool(
     name="generate_docx",
     description=(
-        "[CALL 11 of 12] ONE TASK: இந்த tool call மட்டும். PRECONDITION: CALL 10 final decision ready_for_docx=True கட்டாயம். "
-        "False-ஆக இருந்தால் / CALL 7+8+9+10 முடியாமல் call செய்யாதே — hard rule. "
-        "filled_skeleton = Step 5 result (review pass ஆனது). "
-        "filename_prefix = 'vendor_purchaser' format உதாரணம்: 'ramasamy_murugan'. "
-        "tool call முடிந்தவுடன் response முடிந்தது. success=True → NEXT CALL (தனி response): list_output_files (CALL 12). "
-        "PAN/TDS notes இருந்தால் காட்டு. disclaimer காட்டு. "
-        "success=False: ❌ தோல்வி: [error] மீண்டும் முயற்சிக்கவும்."
+        "[CALL 11 of 12] ONE TASK: call this tool only. "
+
+        "PRECONDITIONS — all must be true before calling: "
+        "(1) CALL 7 review_draft tool has returned. "
+        "(2) CALL 8 — you performed L3 consistency analysis (your own text response, no tool). "
+        "(3) CALL 9 — you performed L4 grammar analysis (your own text response, no tool). "
+        "(4) CALL 10 — you made final decision (your own text response, no tool). "
+        "(5) ready_for_docx = True from your CALL 10 decision. "
+        "If ready_for_docx is False or any of the above are incomplete — do NOT call this tool. "
+
+        "Pass: filled_skeleton = CALL 6 'clean_skeleton'. "
+        "filename_prefix = 'vendorname_purchasername' format (e.g. 'ramasamy_murugan'). "
+
+        "After tool returns: "
+        "success=True  → show PAN/TDS notes if any, show legal disclaimer. Next: CALL 12 list_output_files. "
+        "success=False → '❌ தோல்வி: [error] — மீண்டும் முயற்சிக்கவும்.'"
     ),
     inputSchema={
         "type": "object",

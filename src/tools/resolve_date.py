@@ -35,15 +35,17 @@ from constants import TAMIL_MONTHS
 TOOL_DEFINITION = Tool(
     name="resolve_date",
     description=(
-        "[CALL 4 of 12] ONE TASK: இந்த tool call மட்டும். ALWAYS call — skip செய்யாதே. "
-        "பயனர் date கொடுத்தால்: user_input = அந்த raw text ('today','இன்று','15/05/2026','மே 15 2026'). "
-        "பயனர் date கொடுக்கவில்லை: user_input = '' → tool தானாக இன்றைய தேதி பயன்படுத்தும். "
-        "Return: DATE_DAY, DATE_MONTH (Tamil name மட்டும் — மே/ஜூன்), DATE_YEAR, DATE_FULL, source. "
-        "Return fields-ஐ existing fields dict-இல் merge செய். "
-        "source='today_default': பயனருக்கு சொல் — தேதி கொடுக்கவில்லை, இன்று [DATE_FULL] பயன்படுகிறது. "
-        "source='user_provided': silent — பயனருக்கு சொல்ல வேண்டாம். "
-        "tool call முடிந்தவுடன் response முடிந்தது. "
-        "NEXT CALL (தனி response): validate_fields (CALL 5)."
+        "[CALL 4 of 12] ONE TASK: call this tool only. ALWAYS call — never skip. "
+
+        "HOW TO CALL: "
+        "User gave a date  → user_input = that raw text (e.g. '15/05/2026', 'மே 15', 'today', 'இன்று'). "
+        "No date given     → user_input = ''  (tool will use today's date automatically). "
+
+        "After tool returns: merge DATE_DAY / DATE_MONTH / DATE_YEAR / DATE_FULL into fields dict. "
+        "source='today_default' → tell user: 'தேதி கொடுக்கவில்லை — இன்று [DATE_FULL] பயன்படுகிறது.' "
+        "source='user_provided' → silent, nothing to tell user. "
+
+        "Next separate response: CALL 5 validate_fields."
     ),
     inputSchema={
         "type": "object",

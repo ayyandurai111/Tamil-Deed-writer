@@ -19,22 +19,17 @@ from mcp.types import Tool, TextContent
 TOOL_DEFINITION = Tool(
     name="detect_deed_type",
     description=(
-        "[CALL 1 of 12] ONE TASK: இந்த tool call மட்டும்.  "
-        "YOU (the AI) read the user prompt and determine the deed type yourself. "
-        "Then call this tool with your determination. "
+        "[CALL 1 of 12] ONE TASK: call this tool only. "
+        "Before calling: YOU read the user prompt and determine the deed type yourself. "
 
-        "HOW TO DETERMINE: "
-        "(1) Agriculture = விவசாய நிலம், ஏக்கர், நஞ்சை, புஞ்சை, survey no, பட்டா, "
-        "FMB, கால்வாய், paddy, farm, acre, cent, crop. "
-        "(2) Plot = மனை, வீட்டு மனை, site, sq ft, sqft, square feet, door no, "
-        "ward, வார்டு, கதவு எண், layout, residential, urban. "
-        "(3) Context wins over keywords — "
-        "'2400 sqft வீட்டுமனை' → plot even without explicit 'plot' word. "
-        "(4) If unclear → default to plot. "
+        "DETERMINATION RULES: "
+        "Agriculture → keywords: விவசாய நிலம், ஏக்கர், நஞ்சை, புஞ்சை, survey no, பட்டா, FMB, acre, cent, paddy, crop. "
+        "Plot        → keywords: மனை, site, sqft, sq ft, door no, ward, layout, residential, urban. "
+        "Context wins over keywords — '2400 sqft வீட்டுமனை' is plot even without the word 'plot'. "
+        "If unclear → default to plot. "
 
-        "tool call முடிந்தவுடன் response முடிந்தது. "
-        "NEXT CALL (தனி response): load_skeleton. "
-        "பயனருக்கு சொல்: '[deed_type] பத்திரம் தயாரிக்கிறோம்.'"
+        "After tool returns: tell user '[deed_type label] பத்திரம் தயாரிக்கிறோம்.' "
+        "Next separate response: CALL 2 load_skeleton."
     ),
     inputSchema={
         "type": "object",

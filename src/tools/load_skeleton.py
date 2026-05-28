@@ -19,10 +19,12 @@ from constants import TEMPLATES_DIR
 TOOL_DEFINITION = Tool(
     name="load_skeleton",
     description=(
-        "[CALL 2 of 12] ONE TASK: இந்த tool call மட்டும். detect_deed_type result-ஐ deed_type-ஆக pass செய். "
-        "சரியான JSON template-ஐ {{PLACEHOLDER}} fields உடன் return செய்யும். "
-        "skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை. "
-        "skeleton-ஐ வைத்துக்கொள் — fill_skeleton-க்கு தேவை. tool call முடிந்தவுடன் response முடிந்தது. NEXT CALL (தனி response): extract_fields. பயனருக்கு சொல்ல வேண்டாம் — silent step."
+        "[CALL 2 of 12] ONE TASK: call this tool only. "
+        "Pass deed_type from CALL 1 result. "
+        "Returns the JSON template with {{PLACEHOLDER}} fields. "
+        "Store the returned skeleton — needed for fill_skeleton (CALL 6). "
+        "Silent step — nothing to tell user. "
+        "Next separate response: CALL 3 extract_fields."
     ),
     inputSchema={
         "type": "object",

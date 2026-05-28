@@ -21,15 +21,20 @@ from constants import CRITICAL_FIELDS, PAN_THRESHOLD, TDS_THRESHOLD
 TOOL_DEFINITION = Tool(
     name="validate_fields",
     description=(
-        "[CALL 5 of 12] ONE TASK: இந்த tool call மட்டும். "
-        "deed_type = CALL 1 result. fields = extract_fields result (resolve_date merge ஆனது இருந்தால் அதுவும் சேர்). "
-        "tool call முடிந்தவுடன் response முடிந்தது. can_generate=True → NEXT CALL: fill_skeleton. "
-        "can_generate=False → NEXT CALL (தனி response): missing fields மட்டும் கேள் — tool call அல்ல. "
-        "'பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை: 1.[field]? 2.[field]? ...' "
-        "பயனர் reply வந்த பிறகு: extract_fields CALL (existing_fields pass) → validate_fields CALL LOOP. "
-        "pan_block=True → can_generate எப்போதும் False — PAN எண் கேள், fill_skeleton செல்லாதே — HARD BLOCK. "
-        "tds_required=True மட்டும் (pan_block=False) → TDS note காட்டு, block இல்லை — proceed செய். "
-        "pan_tds_notes-ஐ காட்டுவது advisory மட்டும் — pan_block=True-ஐ override செய்யாது."
+        "[CALL 5 of 12] ONE TASK: call this tool only. "
+        "Pass deed_type (CALL 1) and the fully merged fields dict (extract_fields + resolve_date). "
+
+        "After tool returns — act on result: "
+        "CASE A: can_generate=True, pan_block=False "
+        "  → Next separate response: CALL 6 fill_skeleton. "
+        "CASE B: can_generate=False  [NO TOOL — ask user] "
+        "  → Ask: 'பத்திரம் உருவாக்க கீழ்கண்ட விவரங்கள் தேவை: 1.[field]? 2.[field]?' "
+        "  → After user replies: loop CALL 3 (pass existing_fields=full accumulated dict) → CALL 4 resolve_date → CALL 5 validate_fields. "
+        "  → IMPORTANT: never reset existing_fields — always carry the full dict forward. "
+        "CASE C: pan_block=True  [NO TOOL — ask user, HARD BLOCK] "
+        "  → Ask: 'விற்பனை தொகை ₹10 லட்சத்திற்கு மேல் — PAN கட்டாயம்: விற்பவர் PAN:? வாங்குபவர் PAN:?' "
+        "  → Do NOT proceed to fill_skeleton while pan_block=True. Loop back to CALL 5. "
+        "tds_required=True (when pan_block=False) → show TDS advisory note, then proceed normally."
     ),
     inputSchema={
         "type": "object",

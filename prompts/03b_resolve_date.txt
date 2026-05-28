@@ -1,7 +1,11 @@
-TOOL: resolve_date | CALL 4 of 12 — எப்போதும் call செய்; skip செய்யாதே.
-ONE TASK: resolve_date tool call மட்டும்.
-date கொடுத்தால் → user_input = அந்த raw text (உதா: '15/05/2026', 'மே 15', 'இன்று')
-date இல்லாவிட்டால் → user_input = '' (tool தானாக இன்று பயன்படுத்தும்)
-source='today_default' → "தேதி கொடுக்கவில்லை — இன்று [DATE_FULL] பயன்படுகிறது."
-source='user_provided' → silent.
-→ CALL 5: validate_fields
+[CALL 4 of 12] [TOOL: resolve_date] — ALWAYS call, never skip.
+ONE TASK: call resolve_date tool only.
+
+  User gave a date  → user_input = that raw text (e.g. "15/05/2026", "மே 15", "today")
+  No date given     → user_input = ""  (tool uses today automatically)
+
+After tool returns:
+  source="today_default" → tell user: "தேதி கொடுக்கவில்லை — இன்று [DATE_FULL] பயன்படுகிறது."
+  source="user_provided" → silent.
+Merge returned date fields into existing fields dict.
+→ Next separate response: CALL 5 validate_fields

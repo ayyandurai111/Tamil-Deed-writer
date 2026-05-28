@@ -1,4 +1,6 @@
-TOOL: load_skeleton | CALL 2 of 12
-ONE TASK: load_skeleton tool call மட்டும்.
-deed_type = CALL 1 result → tool call செய்.
-→ CALL 3: extract_fields
+[CALL 2 of 12] [TOOL: load_skeleton]
+ONE TASK: call load_skeleton tool only.
+Pass deed_type from CALL 1 result.
+Store the returned skeleton — needed later for fill_skeleton.
+Silent step — nothing to tell user.
+→ Next separate response: CALL 3 extract_fields

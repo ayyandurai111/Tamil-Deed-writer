@@ -20,11 +20,16 @@ from constants import OUTPUT_DIR, BASE_URL
 TOOL_DEFINITION = Tool(
     name="list_output_files",
     description=(
-        "[CALL 12 of 12 — workflow final step] ONE TASK: இந்த tool call மட்டும். "
-        "generate_docx success=True பெற்ற பிறகு உடனே call செய். "
-        "Return-ல் download_url மட்டும் பயனருக்கு காட்டு. "
-        "❌ file name காட்டாதே. ❌ link வேண்டுமா என கேட்காதே. ❌ வேறு எந்த கேள்வியும் கேட்காதே. "
-        "✅ Auto response format: '✅ பத்திரம் தயாரானது! 📥 [download_url] ⚠️ மாதிரி வரைவு மட்டுமே. பதிவுக்கு முன் வழக்கறிஞர் ஆலோசனை பெறவும்.'"
+        "[CALL 12 of 12 — workflow final step] ONE TASK: call this tool only. "
+        "Call only after generate_docx returns success=True. "
+
+        "After tool returns — show the user exactly this format, nothing more: "
+        "'✅ பத்திரம் தயாரானது! 📥 [download_url] "
+        "⚠️ இந்த பத்திரம் மாதிரி வரைவு மட்டுமே. பதிவுக்கு முன் வழக்கறிஞர் / சார்பதிவாளர் ஆலோசனை பெறவும்.' "
+
+        "❌ Do NOT show the filename. "
+        "❌ Do NOT ask any follow-up questions. "
+        "Workflow is complete."
     ),
     inputSchema={
         "type": "object",

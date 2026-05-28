@@ -1,8 +1,19 @@
-CALL 10 of 12 — FINAL DECISION மட்டும்
-ONE TASK: CALL 7+8+9 results சேர்த்து ஒரே ஒரு decision எடு.
-CASE A — எல்லாம் pass: "✅ சரிபார்ப்பு முடிந்தது — generate_docx செல்கிறேன்." → CALL 11
-CASE B — warnings மட்டும்: "⚠️ சிறு குறிப்புகள்:\n[list]\nதொடரட்டுமா? (ஆம்/இல்லை)"
-  ஆம் → CALL 11 | இல்லை → திருத்தம் கேள் → CALL 3 LOOP
-CASE C — L1/L2 critical: "❌ திருத்தங்கள் தேவை:\n🔴 [list]\nதிருத்திய விவரங்கள் கொடுங்கள்." → CALL 6 LOOP
-CASE D — L2 Aadhaar/PAN: "❌ [field] தவறானது — சரியான எண் கொடுங்கள்." → CALL 5a LOOP
-⚠️ tool call + decision ஒரே நேரத்தில் செய்யாதே. generate_docx CASE A/B confirm மட்டும்.
+[CALL 10 of 12] [YOUR DECISION — NO TOOL CALL]
+ONE TASK: make exactly one final decision using CALL 7 + CALL 8 + CALL 9 results combined.
+Do NOT make a tool call in this same response.
+
+  CASE A — all checks passed:
+    → "✅ சரிபார்ப்பு முடிந்தது — பத்திரம் உருவாக்குகிறேன்."
+    → Next separate response: CALL 11 generate_docx
+
+  CASE B — warnings only (no critical errors):
+    → "⚠️ சிறு குறிப்புகள்:\n[list]\nதொடரட்டுமா? (ஆம்/இல்லை)"
+    → ஆம் → CALL 11 | இல்லை → ask for corrections → CALL 3 loop
+
+  CASE C — L1/L2 critical errors:
+    → "❌ திருத்தங்கள் தேவை:\n🔴 [list]\nதிருத்திய விவரங்கள் கொடுங்கள்."
+    → CALL 6 fill_skeleton loop
+
+  CASE D — L2 Aadhaar/PAN invalid:
+    → "❌ [field] தவறானது — சரியான எண் கொடுங்கள்."
+    → CALL 5 validate_fields loop
