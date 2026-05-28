@@ -795,6 +795,22 @@ async def handle(arguments: dict) -> list[TextContent]:
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
 
+    # ── GUARD: reject empty or minimal skeleton (bypass prevention) ──────────
+    REQUIRED_KEYS = {"vendor", "purchaser", "property"} if deed_type == "agriculture" else {"vendor", "purchaser"}
+    skeleton_keys = set(filled_skeleton.keys())
+    if not filled_skeleton or len(skeleton_keys) < 3 or not REQUIRED_KEYS.intersection(skeleton_keys):
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success":   False,
+                "can_generate": False,
+                "error":     "filled_skeleton is empty or incomplete — run fill_skeleton (CALL 6) and review_draft (CALL 7) first.",
+                "message":   "❌ பத்திர வரைவு தயாரில்லை — fill_skeleton மற்றும் review_draft முடிக்கவும்.",
+                "next_tool": "fill_skeleton"
+            }, ensure_ascii=False)
+        )]
+    # ─────────────────────────────────────────────────────────────────────────
+
     safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
     timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S_%f")   # %f = microseconds → unique per user

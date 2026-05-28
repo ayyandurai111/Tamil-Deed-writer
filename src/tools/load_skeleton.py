@@ -92,3 +92,11 @@ async def handle(arguments: dict) -> list[TextContent]:
             "next_tool": "extract_fields"
         }, ensure_ascii=False, indent=2)
     )]
+
+
+# ── Pipeline-accessible wrapper (used by workflow/pipeline.py) ────────────────
+def _load_skeleton_json(deed_type: str) -> dict:
+    """Load and return the raw skeleton dict. Raises FileNotFoundError if missing."""
+    template_file = TEMPLATES_DIR / f"{deed_type}_skeleton.json"
+    with open(template_file, "r", encoding="utf-8") as f:
+        return json.load(f)

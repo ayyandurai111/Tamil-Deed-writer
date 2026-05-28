@@ -233,3 +233,11 @@ async def handle(arguments: dict) -> list[TextContent]:
             "next_tool": "review_draft"
         }, ensure_ascii=False, indent=2)
     )]
+
+
+# ── Pipeline-accessible wrapper (used by workflow/pipeline.py) ────────────────
+def fill_and_clean(skeleton: dict, fields: dict, deed_type: str) -> dict:
+    """Fill placeholders and clean blanks. Returns clean_skeleton dict."""
+    filled, _, _ = fill(skeleton, fields)
+    cleaned, _   = _cleanup_blanks(filled)
+    return cleaned
