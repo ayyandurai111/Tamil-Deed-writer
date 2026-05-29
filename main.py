@@ -53,16 +53,27 @@ async def handle_sse(request):
 
 # ── Streamable HTTP Transport (GPT / OpenAI Agents SDK) ──────────────────────
 async def handle_streamable_http(request: Request):
-    """GPT / OpenAI Agents SDK → Streamable HTTP transport."""
-    transport = StreamableHTTPServerTransport("/mcp")
-    async with transport.connect(
-        request.scope, request.receive, request._send
-    ) as streams:
-        await mcp_server.run(
-            streams[0],
-            streams[1],
-            mcp_server.create_initialization_options(),
-        )
+    """GPT / OpenAI Agents SDK → Streamable HTTP transport (mcp ≥ 1.9)."""
+    import uuid
+    transport = StreamableHTTPServerTransport(
+        mcp_session_id=uuid.uuid4().hex,
+        is_json_response_enabled=False,
+    )
+    async with transport.connect() as streams:
+        import anyio
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(
+                mcp_server.run,
+                streams[0],
+                streams[1],
+                mcp_server.create_initialization_options(),
+            )
+            tg.start_soon(
+                transport.handle_request,
+                request.scope,
+                request.receive,
+                request._send,
+            )
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 @asynccontextmanager
