@@ -63,7 +63,8 @@ TOOL_DEFINITION = Tool(
                 "default": ""
             }
         },
-        "required": []
+        "required": [],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -103,7 +104,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Always call validate_fields next (CALL 5) — merge date fields into existing fields dict."
             }
         },
-        "required": ["DATE_DAY", "DATE_MONTH", "DATE_YEAR", "DATE_FULL", "source", "message", "next_tool"]
+        "required": ["DATE_DAY", "DATE_MONTH", "DATE_YEAR", "DATE_MONTH_TAMIL", "DATE_FULL", "source", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Deed Date Resolver",

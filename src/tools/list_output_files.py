@@ -20,7 +20,7 @@ from constants import OUTPUT_DIR, BASE_URL
 TOOL_DEFINITION = Tool(
     name="list_output_files",
     description=(
-        "[CALL 12 of 12 — workflow final step] ONE TASK: call this tool only. "
+        "[CALL 8 of 8 — workflow final step] ONE TASK: call this tool only. "
         "Call only after generate_docx returns success=True. "
 
         "After tool returns — show the user exactly this format, nothing more: "
@@ -33,7 +33,8 @@ TOOL_DEFINITION = Tool(
     ),
     inputSchema={
         "type": "object",
-        "properties": {}
+        "properties": {},
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -70,7 +71,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Workflow is complete. No further tool call needed."
             }
         },
-        "required": ["files", "total_files", "output_dir", "message", "next_tool"]
+        "required": ["files", "total_files", "output_dir", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Output File Lister",

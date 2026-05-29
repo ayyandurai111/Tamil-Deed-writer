@@ -12,7 +12,7 @@ TWO-PHASE processing:
 After Phase 2 the skeleton is clean:
   • No "___________" in output
   • No phantom list rows (blank 3rd owner etc.)
-  • generate_docx and review_draft both receive the same clean data
+  • generate_docx receives clean, fully resolved data
 """
 
 import json
@@ -24,15 +24,15 @@ from constants import OPTIONAL_FIELDS
 TOOL_DEFINITION = Tool(
     name="fill_skeleton",
     description=(
-        "[CALL 6 of 12] ONE TASK: call this tool only. "
+        "[CALL 6 of 8] ONE TASK: call this tool only. "
         "Pass skeleton (CALL 2 result) and fields (validate_fields passed dict). "
         "This tool runs two phases internally: "
         "Phase 1 — replaces all {{PLACEHOLDER}} tokens with field values. "
         "Phase 2 — cleans up: blank optional fields → None, empty list entries → removed. "
         "IMPORTANT: store only the 'clean_skeleton' key from the result. "
-        "Pass clean_skeleton (not the full result) to both review_draft (CALL 7) and generate_docx (CALL 11). "
+        "Pass clean_skeleton to generate_docx (CALL 7). "
         "Tell user: 'பத்திர வரைவு தயாரிக்கிறேன்...' "
-        "Next separate response: CALL 7 review_draft."
+        "Next separate response: CALL 7 generate_docx."
     ),
     inputSchema={
         "type": "object",
@@ -50,14 +50,15 @@ TOOL_DEFINITION = Tool(
                 )
             }
         },
-        "required": ["skeleton", "fields"]
+        "required": ["skeleton", "fields"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
         "properties": {
             "clean_skeleton": {
                 "type": "object",
-                "description": "The fully filled and cleaned skeleton JSON. Pass this — not filled_skeleton — to review_draft and generate_docx."
+                "description": "The fully filled and cleaned skeleton JSON. Pass this — not filled_skeleton — to generate_docx."
             },
             "filled_skeleton": {
                 "type": "object",
@@ -86,11 +87,12 @@ TOOL_DEFINITION = Tool(
             },
             "next_tool": {
                 "type": "string",
-                "const": "review_draft",
-                "description": "Always call review_draft next (CALL 7) — pass clean_skeleton."
+                "const": "generate_docx",
+                "description": "Always call generate_docx next (CALL 7) — pass clean_skeleton."
             }
         },
-        "required": ["clean_skeleton", "filled_skeleton", "fields_applied", "placeholders_remaining", "optional_cleaned", "removed_fields", "message", "next_tool"]
+        "required": ["clean_skeleton", "filled_skeleton", "fields_applied", "placeholders_remaining", "optional_cleaned", "removed_fields", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Skeleton Filler + Cleanup",
@@ -228,16 +230,8 @@ async def handle(arguments: dict) -> list[TextContent]:
                 f"✅ {fields_applied} fields applied. "
                 f"{remaining} placeholders remaining. "
                 f"{len(removed_fields)} blank optional fields cleaned. "
-                "clean_skeleton-ஐ review_draft-க்கு pass செய்."
+                "clean_skeleton-ஐ generate_docx-க்கு pass செய்."
             ),
-            "next_tool": "review_draft"
+            "next_tool": "generate_docx"
         }, ensure_ascii=False, indent=2)
     )]
-
-
-# ── Pipeline-accessible wrapper (used by workflow/pipeline.py) ────────────────
-def fill_and_clean(skeleton: dict, fields: dict, deed_type: str) -> dict:
-    """Fill placeholders and clean blanks. Returns clean_skeleton dict."""
-    filled, _, _ = fill(skeleton, fields)
-    cleaned, _   = _cleanup_blanks(filled)
-    return cleaned

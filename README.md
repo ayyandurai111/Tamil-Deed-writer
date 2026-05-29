@@ -36,7 +36,6 @@ Tamil-Deed-writer-v4/
 │       ├── resolve_date.py
 │       ├── validate_fields.py
 │       ├── fill_skeleton.py
-│       ├── review_draft.py
 │       ├── generate_docx.py
 │       └── list_output_files.py
 ├── prompts/                        ← Per-step AI prompt fragments
@@ -132,7 +131,7 @@ POST URL: https://your-server.onrender.com/messages/
 
 ---
 
-## MCP Tools (9 tools, 12 calls)
+## MCP Tools (9 tools, 8 calls)
 
 | # | Tool | Purpose |
 |---|------|---------|
@@ -142,9 +141,8 @@ POST URL: https://your-server.onrender.com/messages/
 | 3b | `resolve_date` | தேதியை Tamil format-ல் resolve செய் |
 | 4 | `validate_fields` | சட்டரீதியான fields சரிபார்; missing list கொடு |
 | 5 | `fill_skeleton` | Data-ஐ placeholders-இல் போடு + cleanup |
-| 6 | `review_draft` | L1+L2 programmatic review |
-| 7 | `generate_docx` | DOCX file உருவாக்கு (Latha font) |
-| 8 | `list_output_files` | Generated files list + download links |
+| 6 | `generate_docx` | DOCX file உருவாக்கு (Latha font) |
+| 7 | `list_output_files` | Generated files list + download links |
 
 ## Workflow
 
@@ -168,26 +166,16 @@ Missing fields?
     ↓
 [CALL 6]  fill_skeleton      ← Replace {{PLACEHOLDERS}} + cleanup
     ↓
-[CALL 7]  review_draft       ← L1 + L2 programmatic checks
+[CALL 7]  generate_docx      ← Render .docx (Latha font)
     ↓
-[CALL 8]  AI: L3 consistency check (district, amount-words, names)
-    ↓
-[CALL 9]  AI: L4 grammar check (Tamil prose, blanks, duplicates)
-    ↓
-[CALL 10] AI: Final decision
-    ├── Errors → LOOP back
-    └── Pass  →
-    ↓
-[CALL 11] generate_docx      ← Render .docx (Latha font)
-    ↓
-[CALL 12] list_output_files  ← Return download URL ✅
+[CALL 8]  list_output_files  ← Return download URL ✅
 ```
 
 ## Health Check / API
 
 ```bash
 curl https://your-server.onrender.com/
-# → { "status": "ok", "version": "8.0.0", "ai_support": [...], "tools": 9 }
+# → { "status": "ok", "version": "9.0.0", "ai_support": [...], "tools": 8 }
 
 curl https://your-server.onrender.com/files
 # → list of generated .docx files with download URLs

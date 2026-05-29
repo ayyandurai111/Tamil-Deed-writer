@@ -49,7 +49,8 @@ TOOL_DEFINITION = Tool(
                 "description": "The fields dict returned by extract_fields."
             }
         },
-        "required": ["deed_type", "fields"]
+        "required": ["deed_type", "fields"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -88,7 +89,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Conditional next step. 'fill_skeleton' when can_generate=true. 'user:ask_missing_fields' when can_generate=false and pan_block=false. 'user:ask_pan_number' when pan_block=true."
             }
         },
-        "required": ["missing_critical", "missing_count", "pan_required", "tds_required", "pan_block", "can_generate", "pan_tds_notes", "next_tool"]
+        "required": ["missing_critical", "missing_count", "pan_required", "tds_required", "pan_block", "can_generate", "pan_tds_notes", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Legal Field Validator",

@@ -32,21 +32,13 @@ from file_store import put as _mem_store
 TOOL_DEFINITION = Tool(
     name="generate_docx",
     description=(
-        "[CALL 11 of 12] ONE TASK: call this tool only. "
-
-        "PRECONDITIONS — all must be true before calling: "
-        "(1) CALL 7 review_draft tool has returned. "
-        "(2) CALL 8 — you performed L3 consistency analysis (your own text response, no tool). "
-        "(3) CALL 9 — you performed L4 grammar analysis (your own text response, no tool). "
-        "(4) CALL 10 — you made final decision (your own text response, no tool). "
-        "(5) ready_for_docx = True from your CALL 10 decision. "
-        "If ready_for_docx is False or any of the above are incomplete — do NOT call this tool. "
+        "[CALL 7 of 8] ONE TASK: call this tool only. "
 
         "Pass: filled_skeleton = CALL 6 'clean_skeleton'. "
         "filename_prefix = 'vendorname_purchasername' format (e.g. 'ramasamy_murugan'). "
 
         "After tool returns: "
-        "success=True  → show PAN/TDS notes if any, show legal disclaimer. Next: CALL 12 list_output_files. "
+        "success=True  → show PAN/TDS notes if any, show legal disclaimer. Next: CALL 8 list_output_files. "
         "success=False → '❌ தோல்வி: [error] — மீண்டும் முயற்சிக்கவும்.'"
     ),
     inputSchema={
@@ -60,13 +52,10 @@ TOOL_DEFINITION = Tool(
                 "type": "string",
                 "description": "Optional prefix for the output filename (e.g. 'raman_karthik').",
                 "default": "deed"
-            },
-            "session_id": {
-                "type": "string",
-                "description": "Unique session/user ID. Files saved under OUTPUT_DIR/session_id/. Use same value in list_output_files."
             }
         },
-        "required": ["filled_skeleton"]
+        "required": ["filled_skeleton"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -76,24 +65,16 @@ TOOL_DEFINITION = Tool(
                 "description": "True when the .docx file was created successfully."
             },
             "filename": {
-                "type": "string",
-                "description": "Generated filename, e.g. 'ramasamy_aB3xYz9k.docx'. Present only on success."
+                "type": ["string", "null"],
+                "description": "Generated filename, e.g. 'ramasamy_20260528_123456.docx'. null on failure."
             },
             "file": {
-                "type": "string",
-                "description": "Absolute path to the generated file on disk. Present only on success."
-            },
-            "can_generate": {
-                "type": "boolean",
-                "description": "False when critical fields are still missing (validation bypass guard). Present only on failure."
-            },
-            "missing_critical": {
-                "type": "object",
-                "description": "Dict of missing critical fields that blocked generation. Present only when can_generate=false."
+                "type": ["string", "null"],
+                "description": "Absolute path to the generated file on disk. null on failure."
             },
             "error": {
-                "type": "string",
-                "description": "Error detail string. Present only on exception failure."
+                "type": ["string", "null"],
+                "description": "Error detail string. null on success."
             },
             "message": {
                 "type": "string",
@@ -101,10 +82,11 @@ TOOL_DEFINITION = Tool(
             },
             "next_tool": {
                 "type": ["string", "null"],
-                "description": "'list_output_files' on success. 'validate_fields' when critical fields are missing. null on unexpected exception."
+                "description": "'list_output_files' on success. null on failure."
             }
         },
-        "required": ["success", "message", "next_tool"]
+        "required": ["success", "filename", "file", "error", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":           "DOCX Generator",
@@ -795,22 +777,6 @@ async def handle(arguments: dict) -> list[TextContent]:
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
 
-    # ── GUARD: reject empty or minimal skeleton (bypass prevention) ──────────
-    REQUIRED_KEYS = {"vendor", "purchaser", "property"} if deed_type == "agriculture" else {"vendor", "purchaser"}
-    skeleton_keys = set(filled_skeleton.keys())
-    if not filled_skeleton or len(skeleton_keys) < 3 or not REQUIRED_KEYS.intersection(skeleton_keys):
-        return [TextContent(
-            type="text",
-            text=json.dumps({
-                "success":   False,
-                "can_generate": False,
-                "error":     "filled_skeleton is empty or incomplete — run fill_skeleton (CALL 6) and review_draft (CALL 7) first.",
-                "message":   "❌ பத்திர வரைவு தயாரில்லை — fill_skeleton மற்றும் review_draft முடிக்கவும்.",
-                "next_tool": "fill_skeleton"
-            }, ensure_ascii=False)
-        )]
-    # ─────────────────────────────────────────────────────────────────────────
-
     safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()
     timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S_%f")   # %f = microseconds → unique per user
@@ -830,10 +796,11 @@ async def handle(arguments: dict) -> list[TextContent]:
         return [TextContent(
             type="text",
             text=json.dumps({
-                "success":  True,
-                "file":     str(output_path),
-                "filename": filename,
-                "message":  f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்.",
+                "success":   True,
+                "filename":  filename,
+                "file":      str(output_path),
+                "error":     None,
+                "message":   f"✅ பத்திரம் தயாரிக்கப்பட்டது: {filename}\nகோப்பை பார்க்க list_output_files tool call செய்.",
                 "next_tool": "list_output_files"
             }, ensure_ascii=False, indent=2)
         )]
@@ -842,9 +809,11 @@ async def handle(arguments: dict) -> list[TextContent]:
         return [TextContent(
             type="text",
             text=json.dumps({
-                "success": False,
-                "error":   str(e),
-                "message": f"❌ DOCX generation failed: {e}",
+                "success":  False,
+                "filename": None,
+                "file":     None,
+                "error":    str(e),
+                "message":  f"❌ DOCX generation failed: {e}",
                 "next_tool": None
             }, ensure_ascii=False)
         )]

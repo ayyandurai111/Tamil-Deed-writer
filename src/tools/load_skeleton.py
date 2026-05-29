@@ -35,7 +35,8 @@ TOOL_DEFINITION = Tool(
                 "description": "The type of deed: 'agriculture' or 'plot'."
             }
         },
-        "required": ["deed_type"]
+        "required": ["deed_type"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -59,7 +60,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Always call extract_fields next (CALL 3)."
             }
         },
-        "required": ["skeleton", "deed_type", "message", "next_tool"]
+        "required": ["skeleton", "deed_type", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Skeleton Loader",
@@ -92,11 +94,3 @@ async def handle(arguments: dict) -> list[TextContent]:
             "next_tool": "extract_fields"
         }, ensure_ascii=False, indent=2)
     )]
-
-
-# ── Pipeline-accessible wrapper (used by workflow/pipeline.py) ────────────────
-def _load_skeleton_json(deed_type: str) -> dict:
-    """Load and return the raw skeleton dict. Raises FileNotFoundError if missing."""
-    template_file = TEMPLATES_DIR / f"{deed_type}_skeleton.json"
-    with open(template_file, "r", encoding="utf-8") as f:
-        return json.load(f)

@@ -1,6 +1,6 @@
-[CALL 6 of 12] [TOOL: fill_skeleton]
+[CALL 6 of 8] [TOOL: fill_skeleton]
 ONE TASK: call fill_skeleton tool only.
 Pass skeleton (CALL 2 result) and fields (validate_fields passed dict).
-Store ONLY the "clean_skeleton" key from the result — pass this to CALL 7 and CALL 11.
+Store ONLY the "clean_skeleton" key from the result — pass this to CALL 7.
 Tell user: "பத்திர வரைவு தயாரிக்கிறேன்..."
-→ Next separate response: CALL 7 review_draft
+→ Next separate response: CALL 7 generate_docx

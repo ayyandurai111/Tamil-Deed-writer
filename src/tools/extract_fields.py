@@ -59,7 +59,8 @@ TOOL_DEFINITION = Tool(
                 "default": {}
             }
         },
-        "required": ["deed_type", "extracted_fields"]
+        "required": ["deed_type", "extracted_fields"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -96,7 +97,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Always call resolve_date next (CALL 4) — pass date string or empty string."
             }
         },
-        "required": ["fields", "found_count", "missing_count", "found_fields", "missing_fields", "message", "next_tool"]
+        "required": ["fields", "found_count", "missing_count", "found_fields", "missing_fields", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Field Merger",

@@ -44,7 +44,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Brief reason for your determination (e.g. 'user mentioned ஏக்கர் and நஞ்சை')."
             }
         },
-        "required": ["deed_type"]
+        "required": ["deed_type"],
+        "additionalProperties": False
     },
     outputSchema={
         "type": "object",
@@ -72,7 +73,8 @@ TOOL_DEFINITION = Tool(
                 "description": "Always call load_skeleton next (CALL 2)."
             }
         },
-        "required": ["deed_type", "label", "message", "next_tool"]
+        "required": ["deed_type", "label", "reason", "message", "next_tool"],
+        "additionalProperties": False
     },
     annotations={
         "title":          "Deed Type Validator",

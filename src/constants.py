@@ -61,8 +61,11 @@ OPTIONAL_FIELDS = {
         # Consideration optional
         "ADVANCE_DATE",       "ADVANCE_AMOUNT",
         "BALANCE_DATE",       "TRANSACTION_NO",    "TRANSACTION_DATE",
-        # Chain of title — 3rd owner optional
+        # Chain of title — prior doc optional, 3rd owner optional
+        "PRIOR_DOC_NO",       "PRIOR_YEAR",
         "OWNER_3",            "DOC_NO_3",
+        # PAN — only required when TOTAL_AMOUNT >= 10L (enforced by validate_fields)
+        "VENDOR_PAN",         "PURCHASER_PAN",
         # Documents handed over — all optional
         "MOTHER_DEED",        "PATTA_COPY",        "CHITTA_ADANGAL",
         "EC_COPY",            "FMB_SKETCH",        "TAX_RECEIPTS",
@@ -76,6 +79,15 @@ OPTIONAL_FIELDS = {
         "PURCHASER_CASTE",    "PURCHASER_OCCUPATION",
         "ADVANCE_DATE",       "ADVANCE_AMOUNT",
         "BALANCE_DATE",       "TRANSACTION_NO",    "TRANSACTION_DATE",
+        # Prior deed optional
+        "PRIOR_DOC_NO",       "PRIOR_YEAR",        "PRIOR_REG_OFFICE",   "PRIOR_PURCHASE_DATE",
+        # Property details optional (plot uses multiple possible fields)
+        "BOUNDARY_EAST",      "BOUNDARY_WEST",     "BOUNDARY_NORTH",     "BOUNDARY_SOUTH",
+        "PROP_AREA",          "PROP_DISTRICT",      "TALUK",
+        "DOOR_NO",            "STREET",             "WARD_NO",            "PLOT_NO",
+        "EXTENT_SQFT",
+        # Documents optional
+        "HANDED_DOC_NO",
         "WITNESS1_AADHAAR",   "WITNESS2_AADHAAR",
     }),
 }
@@ -96,19 +108,19 @@ CRITICAL_FIELDS = {
         "PURCHASER_FATHER":   "வாங்குபவர் தந்தை / கணவர் பெயர்",
         "PURCHASER_AGE":      "வாங்குபவர் வயது",
         "PURCHASER_ADDRESS":  "வாங்குபவர் முழு விலாசம்",
-        "PURCHASER_AADHAAR":  "வாங்குபவர் ஆதார் எண் (12 இலக்கம்)",
+        "PURCHASER_ID":       "வாங்குபவர் ஆதார் / PAN (PURCHASER_ID)",
         "PURCHASER_PHONE":    "வாங்குபவர் கைபேசி எண்",
         "VENDOR_NAME":        "விற்பவர் பெயர்",
         "VENDOR_FATHER":      "விற்பவர் தந்தை / கணவர் பெயர்",
         "VENDOR_AGE":         "விற்பவர் வயது",
         "VENDOR_ADDRESS":     "விற்பவர் முழு விலாசம்",
-        "VENDOR_AADHAAR":     "விற்பவர் ஆதார் எண் (12 இலக்கம்)",
+        "VENDOR_ID":          "விற்பவர் ஆதார் / PAN (VENDOR_ID)",
         "VENDOR_PHONE":       "விற்பவர் கைபேசி எண்",
         "TOTAL_AMOUNT":       "மொத்த விற்பனை தொகை (ரூ. எண்ணில்)",
         "AMOUNT_WORDS":       "மொத்த தொகை எழுத்தில்",
+        "RECEIVED_AMOUNT":    "பெற்ற தொகை",
+        "RECEIVED_WORDS":     "பெற்ற தொகை எழுத்தில்",
         "PAYMENT_MODE":       "செலுத்திய விதம்",
-        "BALANCE_AMOUNT":     "இருப்பு தொகை",
-        "BANK_NAME":          "வங்கி பெயர்",
         "WITNESS1_NAME":      "சாட்சி 1 பெயர்",
         "WITNESS1_ADDRESS":   "சாட்சி 1 விலாசம்",
         "WITNESS2_NAME":      "சாட்சி 2 பெயர்",
@@ -144,7 +156,7 @@ CRITICAL_FIELDS = {
         "PURCHASER_FATHER":   "வாங்குபவர் தந்தை / கணவர் பெயர்",
         "PURCHASER_AGE":      "வாங்குபவர் வயது",
         "PURCHASER_ADDRESS":  "வாங்குபவர் முழு விலாசம்",
-        "PURCHASER_AADHAAR":  "வாங்குபவர் ஆதார் எண் (12 இலக்கம்)",
+        "PURCHASER_ID":       "வாங்குபவர் ஆதார் / PAN (PURCHASER_ID)",
         "PURCHASER_PHONE":    "வாங்குபவர் கைபேசி எண்",
 
         # ── Property ──────────────────────────────────────────────────────────

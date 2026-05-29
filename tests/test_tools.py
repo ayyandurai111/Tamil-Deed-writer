@@ -190,37 +190,9 @@ async def run():
     assert filled_ag["property"]["land_nature"] == "நஞ்சை", f"FAIL land_nature"
     print(f"   ✅ fields_applied={d['fields_applied']}, remaining_placeholders={d['placeholders_remaining']}")
 
-    # ── 11. review_draft — L1 + L2 + L3 + L4 check ──────────────────
-    print("\n[12] review_draft — clean draft should pass all layers")
-    d = await call("review_draft", {
-        "filled_skeleton": filled_ag,
-        "deed_type":       "agriculture"
-    })
-    assert d["ready_for_docx"] == True, f"FAIL: {d['summary']}\nErrors: {d['layers']}"
-    assert "L3_consistency" in d["layers"], "FAIL: L3 layer missing"
-    l3 = d["layers"]["L3_consistency"]
-    assert isinstance(l3, dict),          "FAIL: L3 should be a dict"
-    assert "passed" in l3,                "FAIL: L3 missing 'passed' key"
-    assert "warnings" in l3,              "FAIL: L3 missing 'warnings' key"
-    print(f"   ✅ ready_for_docx={d['ready_for_docx']}")
-    print(f"   ✅ L3 layer present and structured: passed={l3['passed']}")
-    print(f"   ✅ Summary: {d['summary']}")
-
-    # ── 13. review_draft — unfilled placeholder in skeleton → L1 fail ─
-    print("\n[13] review_draft — unfilled placeholder in skeleton → critical error")
-    import copy
-    bad_skeleton = copy.deepcopy(filled_ag)
-    bad_skeleton["vendor"]["name"] = "{{MISSING_FIELD}}"   # inject bad placeholder
-    d = await call("review_draft", {
-        "clean_skeleton": bad_skeleton,
-        "deed_type":      "agriculture"
-    })
-    assert d["ready_for_docx"] == False, f"FAIL: should have failed"
-    assert d["critical_count"] > 0
-    print(f"   ✅ ready_for_docx=False — L1 caught {{{{MISSING_FIELD}}}} in skeleton")
 
     # ── 14. generate_docx — agriculture ───────────────────────────────
-    print("\n[14] generate_docx — agriculture")
+    print("\n[11] generate_docx — agriculture")
     d = await call("generate_docx", {
         "filled_skeleton":  filled_ag,
         "filename_prefix": "ramasamy_murugan"
@@ -232,7 +204,7 @@ async def run():
     print(f"   📄 {d['file']}")
 
     # ── 15. fill + generate — plot ────────────────────────────────────
-    print("\n[15] fill_skeleton + generate_docx — plot")
+    print("\n[12] fill_skeleton + generate_docx — plot")
     plot_fields = {
         "PURCHASER_NAME": "சுரேஷ்",  "PURCHASER_FATHER": "பாலன்",
         "PURCHASER_AGE": "35",
@@ -287,7 +259,7 @@ async def run():
     print(f"   ✅ {d3['message']}")
 
     # ── 16. validate_fields — PAN check: plot deed (VENDOR_ID) ────────
-    print("\n[16] validate_fields — plot, amount > 10L, PAN inside VENDOR_ID")
+    print("\n[13] validate_fields — plot, amount > 10L, PAN inside VENDOR_ID")
     d = await call("validate_fields", {
         "deed_type": "plot",
         "fields": {
@@ -302,7 +274,7 @@ async def run():
     print(f"   ✅ pan_required=True, PAN not in missing (correctly found in VENDOR_ID)")
 
     # ── 17. validate_fields — plot, amount > 10L, NO PAN in VENDOR_ID ─
-    print("\n[17] validate_fields — plot, amount > 10L, PAN missing from VENDOR_ID")
+    print("\n[14] validate_fields — plot, amount > 10L, PAN missing from VENDOR_ID")
     d = await call("validate_fields", {
         "deed_type": "plot",
         "fields": {
@@ -317,7 +289,7 @@ async def run():
     print(f"   ✅ PAN correctly flagged as missing: {pan_missing}")
 
     # ── 18. list_output_files ─────────────────────────────────────────
-    print("\n[18] list_output_files")
+    print("\n[15] list_output_files")
     d = await call("list_output_files", {})
     assert d["total_files"] >= 2, f"FAIL: expected ≥2 files, got {d['total_files']}"
     print(f"   ✅ Total files: {d['total_files']}")
@@ -325,7 +297,7 @@ async def run():
         print(f"   📄 {f['filename']} — {f['size_kb']} KB")
 
     # ── 19. Tool annotations check ────────────────────────────────────
-    print("\n[19] Tool annotations — all tools have title + readOnlyHint")
+    print("\n[16] Tool annotations — all tools have title + readOnlyHint")
     import tools as reg
     for tool_def in reg.TOOL_DEFINITIONS:
         ann  = getattr(tool_def, "annotations", None)
@@ -337,7 +309,7 @@ async def run():
         print(f"   ✅ {name:<22} readOnly={readonly}")
 
     # ── 20. generate_docx — Tamil filename_prefix falls back safely ───
-    print("\n[20] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
+    print("\n[17] generate_docx — Tamil/non-ASCII filename_prefix handled safely")
     d2_tamil = await call("generate_docx", {
         "filled_skeleton":  d2["filled_skeleton"],
         "filename_prefix":  "ராமசாமி_முருகன்"    # Tamil chars
@@ -349,28 +321,9 @@ async def run():
         f"FAIL: consecutive underscores suggest bad sanitization: {fname}"
     print(f"   ✅ Tamil prefix → safe filename: {fname}")
 
-    # ── 21. review_draft — ___ placeholders don't cause false Aadhaar errors
-    print("\n[21] review_draft — underscore blanks don't trigger false Aadhaar errors")
-    skeleton_with_blanks = {
-        "vendor":        {"aadhaar": "___________", "pan": "___________"},
-        "purchaser":     {"aadhaar": "___________", "pan": "___________"},
-        "header":        {"date_day": "15", "date_month": "மே", "date_year": "2026"},
-        "consideration": {"total_amount": "2500000"},
-        "property":      {}
-    }
-    d_rev = await call("review_draft", {
-        "draft_text":      "சுத்த விக்கிரயப் பத்திரம் — test draft text.",
-        "filled_skeleton": skeleton_with_blanks,
-        "deed_type":       "agriculture"
-    })
-    l2_errors = d_rev["layers"]["L2_legal"]["errors"]
-    aadhaar_errors = [e for e in l2_errors if "ஆதார்" in e.get("issue", "")]
-    assert len(aadhaar_errors) == 0, \
-        f"FAIL: ___ blanks triggered false Aadhaar error: {aadhaar_errors}"
-    print(f"   ✅ No false Aadhaar errors for blank (___ ) fields")
 
     # ── 22. PAN: rupee symbol in TOTAL_AMOUNT doesn't bypass PAN check ──
-    print("\n[22] validate_fields — ₹ symbol in TOTAL_AMOUNT still triggers PAN")
+    print("\n[18] validate_fields — ₹ symbol in TOTAL_AMOUNT still triggers PAN")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {"TOTAL_AMOUNT": "₹1500000"},  # rupee symbol
@@ -380,7 +333,7 @@ async def run():
     print(f"   ✅ ₹ symbol stripped correctly — pan_required=True")
 
     # ── 23. PAN: amount with lakhs notation (25,00,000) parsed correctly ─
-    print("\n[23] validate_fields — Indian lakh notation 25,00,000")
+    print("\n[19] validate_fields — Indian lakh notation 25,00,000")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {"TOTAL_AMOUNT": "25,00,000"},
@@ -390,7 +343,7 @@ async def run():
     print(f"   ✅ 25,00,000 parsed → pan_required=True, tds_required=False")
 
     # ── 24. PAN: strict regex rejects malformed PAN (too long) ───────────
-    print("\n[24] validate_fields — malformed PAN (ABCDE1234FF) rejected")
+    print("\n[20] validate_fields — malformed PAN (ABCDE1234FF) rejected")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {
@@ -406,7 +359,7 @@ async def run():
     print(f"   ✅ Malformed PAN 'ABCDE1234FF' correctly rejected")
 
     # ── 25. PAN: agriculture PAN in VENDOR_AADHAAR fallback field ────────
-    print("\n[25] validate_fields — agriculture PAN found in VENDOR_AADHAAR fallback")
+    print("\n[21] validate_fields — agriculture PAN found in VENDOR_AADHAAR fallback")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {
@@ -423,7 +376,7 @@ async def run():
     print(f"   ✅ PAN in VENDOR_AADHAAR fallback correctly accepted")
 
     # ── 26. TDS threshold wording — 50L exactly triggers TDS ─────────────
-    print("\n[26] validate_fields — TDS at exactly ₹50L boundary")
+    print("\n[22] validate_fields — TDS at exactly ₹50L boundary")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {
@@ -439,7 +392,7 @@ async def run():
     print(f"   ✅ tds_required=True at 50L, note wording correct: 'அல்லது அதிகம்'")
 
     # ── 27. pan_block note is explicit ───────────────────────────────────
-    print("\n[27] validate_fields — pan_block=True emits explicit block note")
+    print("\n[23] validate_fields — pan_block=True emits explicit block note")
     d = await call("validate_fields", {
         "deed_type": "agriculture",
         "fields": {"TOTAL_AMOUNT": "1500000"},
@@ -451,7 +404,7 @@ async def run():
     print(f"   ✅ Explicit 🚫 pan_block note present: {block_notes[0][:60]}...")
 
     print("\n" + "=" * 60)
-    print("✅ ALL 27 TESTS PASSED — MCP Server v9 Ready!")
+    print("✅ ALL 24 TESTS PASSED — MCP Server v9 Ready!")
     print("=" * 60)
 
 
