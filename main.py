@@ -57,7 +57,7 @@ async def handle_streamable_http(request: Request):
     import uuid
     transport = StreamableHTTPServerTransport(
         mcp_session_id=uuid.uuid4().hex,
-        is_json_response_enabled=False,
+        is_json_response_enabled=True,  # GPT / OpenAI Agents SDK expects JSON responses
     )
     async with transport.connect() as streams:
         import anyio
