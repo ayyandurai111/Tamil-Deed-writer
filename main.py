@@ -53,11 +53,24 @@ async def handle_sse(request):
 
 # ── Streamable HTTP Transport (GPT / OpenAI Agents SDK) ──────────────────────
 async def handle_streamable_http(request: Request):
-    """GPT / OpenAI Agents SDK → Streamable HTTP transport (mcp ≥ 1.9)."""
+    """
+    Smart router for /mcp endpoint:
+    - Claude.ai sends Accept: text/event-stream → delegate to SSE handler
+    - GPT / OpenAI Agents SDK → Streamable HTTP / JSON transport (mcp ≥ 1.9)
+
+    This fixes: {"error": "Not Acceptable: Client must accept text/event-stream"}
+    when Claude.ai connects to /mcp instead of /sse.
+    """
+    accept = request.headers.get("accept", "")
+    if "text/event-stream" in accept:
+        # Claude-style client — route to SSE handler
+        await handle_sse(request)
+        return
+
     import uuid
     transport = StreamableHTTPServerTransport(
         mcp_session_id=uuid.uuid4().hex,
-        is_json_response_enabled=True,  # GPT / OpenAI Agents SDK expects JSON responses
+        is_json_response_enabled=True,   # allow JSON responses (no SSE header required)
     )
     async with transport.connect() as streams:
         import anyio
