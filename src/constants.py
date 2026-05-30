@@ -140,7 +140,6 @@ CRITICAL_FIELDS = {
         "TALUK":              "தாலுக்கா",
 
         # ── Vendor ────────────────────────────────────────────────────────────
-        "VENDOR_PREFIX":      "விற்பவர் முன்னொட்டு (திரு / திருமதி / செல்வி)",
         "VENDOR_NAME":        "விற்பவர் பெயர்",
         "VENDOR_RELATION":    "விற்பவர் உறவு (மகன் / மகள் / மனைவி)",
         "VENDOR_FATHER":      "விற்பவர் தந்தை / கணவர் பெயர்",
@@ -150,7 +149,6 @@ CRITICAL_FIELDS = {
         "VENDOR_PHONE":       "விற்பவர் கைபேசி எண்",
 
         # ── Purchaser ─────────────────────────────────────────────────────────
-        "PURCHASER_PREFIX":   "வாங்குபவர் முன்னொட்டு",
         "PURCHASER_NAME":     "வாங்குபவர் பெயர்",
         "PURCHASER_RELATION": "வாங்குபவர் உறவு",
         "PURCHASER_FATHER":   "வாங்குபவர் தந்தை / கணவர் பெயர்",
@@ -182,8 +180,6 @@ CRITICAL_FIELDS = {
         "TOTAL_AMOUNT":       "மொத்த விற்பனை தொகை (ரூ. எண்ணில்)",
         "AMOUNT_WORDS":       "மொத்த தொகை எழுத்தில்",
         "PAYMENT_MODE":       "செலுத்திய விதம்",
-        "BALANCE_AMOUNT":     "இருப்பு தொகை",
-        "BANK_NAME":          "வங்கி பெயர்",
 
         # ── Chain of title — at least 1st owner required ───────────────────
         "OWNER_1":            "1வது உரிமையாளர் பெயர்",

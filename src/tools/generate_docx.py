@@ -772,10 +772,52 @@ def _flatten_skeleton(skeleton: dict) -> dict:
     return flat
 
 
+def _count_unfilled(skeleton: dict) -> int:
+    """Count how many values still contain {{PLACEHOLDER}} templates."""
+    count = 0
+    def _walk(obj):
+        nonlocal count
+        if isinstance(obj, str):
+            if obj.startswith("{{") and obj.endswith("}}"):
+                count += 1
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                _walk(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                _walk(item)
+    _walk(skeleton)
+    return count
+
+
 async def handle(arguments: dict) -> list[TextContent]:
     filled_skeleton = arguments.get("filled_skeleton", {})
     prefix          = arguments.get("filename_prefix", "deed")
     deed_type       = filled_skeleton.get("type", "plot")
+
+    # ── Guard: reject skeleton that was never passed through fill_skeleton ──
+    unfilled_count = _count_unfilled(filled_skeleton)
+    if unfilled_count > 10:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success":   False,
+                "filename":  None,
+                "file":      None,
+                "error":     (
+                    f"Skeleton has {unfilled_count} unfilled {{{{PLACEHOLDER}}}} values. "
+                    "fill_skeleton (CALL 6) was not called or its 'clean_skeleton' output "
+                    "was not passed here. Call fill_skeleton first, then pass its "
+                    "'clean_skeleton' result to generate_docx."
+                ),
+                "message":   (
+                    f"தோல்வி: skeleton-ல் {unfilled_count} field-கள் fill ஆகவில்லை. "
+                    "fill_skeleton (CALL 6) call செய்யவில்லை அல்லது தவறான key pass ஆனது. "
+                    "fill_skeleton -> clean_skeleton -> generate_docx sequence பின்பற்றவும்."
+                ),
+                "next_tool": None,
+            }, ensure_ascii=False)
+        )]
 
     safe_prefix = "".join(c if c.isalnum() and ord(c) < 128 else "_" for c in prefix)
     first_name  = (safe_prefix.strip("_").split("_")[0] or "deed").lower()

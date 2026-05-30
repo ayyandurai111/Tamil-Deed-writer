@@ -1,10 +1,31 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
+.Python
 *.egg-info/
 dist/
 build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Output files
+outputs/
+*.docx
+
+# OS
 .DS_Store
-output/*.docx
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

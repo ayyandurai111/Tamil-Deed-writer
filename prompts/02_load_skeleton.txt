@@ -1,6 +1,0 @@
-[CALL 2 of 12] [TOOL: load_skeleton]
-ONE TASK: call load_skeleton tool only.
-Pass deed_type from CALL 1 result.
-Store the returned skeleton — needed later for fill_skeleton.
-Silent step — nothing to tell user.
-→ Next separate response: CALL 3 extract_fields

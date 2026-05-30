@@ -33,9 +33,33 @@ _OUTPUT_SCHEMAS: dict[str, dict] = {
 }
 
 
+SERVER_INSTRUCTIONS = """
+Tamil Sale Deed Writer — 3-Tool Workflow
+
+STRICT CALL ORDER: extract → analyse → build
+- Never call analyse before extract returns ready_for_analyse=true
+- Never call build before analyse returns can_proceed=true and pan_block=false
+- Never call two tools in one response
+
+LOOP RULES:
+- If extract returns field_errors or missing_fields → ask user in Tamil → call extract again
+- If analyse returns pan_block=true → ask user for PAN in Tamil → call extract + analyse again
+- Always pass existing_fields (full accumulated dict) when looping extract
+
+LANGUAGE: All replies to user must be in Tamil only.
+"""
+
 @server.list_tools()
 async def list_tools() -> list[Tool]:
     return tool_registry.TOOL_DEFINITIONS
+
+@server.get_prompt()
+async def get_prompt(name: str, arguments: dict | None = None):
+    from mcp.types import GetPromptResult, PromptMessage, TextContent as TC
+    return GetPromptResult(
+        description="Tamil Deed Writer workflow instructions",
+        messages=[PromptMessage(role="user", content=TC(type="text", text=SERVER_INSTRUCTIONS))]
+    )
 
 
 @server.call_tool()
