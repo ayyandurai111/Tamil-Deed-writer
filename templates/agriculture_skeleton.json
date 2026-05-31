@@ -3,7 +3,10 @@
   "title": "சுத்த விக்கிரயப் பத்திரம்",
   "subtitle": "ABSOLUTE SALE DEED — AGRICULTURE LAND",
   "act_ref": "(பதிவுச் சட்டம் 1908, பிரிவு 17 மற்றும் சொத்து மாற்றுச் சட்டம் 1882 இன் படி பதிவு செய்யப்படுவது)",
-  "stamp_note": "[ ரூபாய் {{STAMP_VALUE}} மதிப்புள்ள இ-ஸ்டாம்ப் பேப்பரில் எழுதப்படுவது ]",
+  "stamp_note": {
+    "value": "[ ரூபாய் {{STAMP_VALUE}} மதிப்புள்ள இ-ஸ்டாம்ப் பேப்பரில் எழுதப்படுவது ]",
+    "optional": true
+  },
   "header": {
     "date_day": "{{DATE_DAY}}",
     "date_month": "{{DATE_MONTH}}",
@@ -57,20 +60,35 @@
     "survey_no": "{{SURVEY_NO}}",
     "subdivision": "{{SUBDIVISION}}",
     "patta_no": "{{PATTA_NO}}",
-    "chitta_no": "{{CHITTA_NO}}",
+    "chitta_no": {
+      "value": "{{CHITTA_NO}}",
+      "optional": true
+    },
     "land_type": "{{LAND_TYPE}}",
     "land_nature": "{{NANJAI_OR_PUNJAI}}",
     "water_source": "{{WATER_SOURCE}}",
-    "a_register_no": "{{A_REGISTER_NO}}",
+    "a_register_no": {
+      "value": "{{A_REGISTER_NO}}",
+      "optional": true
+    },
     "extent_acre": "{{EXTENT_ACRE}}",
     "extent_cent": "{{EXTENT_CENT}}",
     "boundary_east": "{{BOUNDARY_EAST}}",
     "boundary_west": "{{BOUNDARY_WEST}}",
     "boundary_north": "{{BOUNDARY_NORTH}}",
     "boundary_south": "{{BOUNDARY_SOUTH}}",
-    "buildings": "{{BUILDINGS}}",
-    "trees": "{{TREES}}",
-    "water_structures": "{{WATER_STRUCTURES}}"
+    "buildings": {
+      "value": "{{BUILDINGS}}",
+      "optional": true
+    },
+    "trees": {
+      "value": "{{TREES}}",
+      "optional": true
+    },
+    "water_structures": {
+      "value": "{{WATER_STRUCTURES}}",
+      "optional": true
+    }
   },
   "section_3_label": "பகுதி 3 — விற்பனை இணக்கம் (SALE CONSIDERATION)",
   "consideration": {
@@ -122,9 +140,18 @@
     "land_nature_detail": "{{NANJAI_OR_PUNJAI}}",
     "land_nature_clause": "இந்த விவசாய நிலம் {{NANJAI_OR_PUNJAI}} வகையினதாகும். இதன் வகை மாற்றம் (Change of Land Use) செய்ய விரும்பினால், கொள்முதலாளர் தமிழ்நாடு அரசின் விதிகளின்படி (TN Change of Land Use Rules, 2017) தனியே அனுமதி பெற வேண்டும்.",
     "irrigation_clause": "இந்த நிலத்தில் உள்ள அனைத்து நீர்ப்பாசன உரிமைகளும் (கால்வாய் பாசன பங்கு, கிணறு, ஆழ்துளைக் கிணறு, ஏரி பாசன பங்கு), தண்ணீர் கட்டமைப்புகளும் இந்த கிரையத்தோடு முழுமையான உரிமையுடன் கொள்முதலாளருக்கு மாற்றப்படுகின்றன. சர்ச்சைக்குரிய நீர் பங்கு ஏதும் இல்லை என்று விற்பனையாளர் உறுதி கூறுகிறார்.",
-    "standing_crops": "{{STANDING_CROPS}}",
-    "trees_detail": "{{TREES_DETAIL}}",
-    "farm_structure": "{{FARM_STRUCTURE}}",
+    "standing_crops": {
+      "value": "{{STANDING_CROPS}}",
+      "optional": true
+    },
+    "trees_detail": {
+      "value": "{{TREES_DETAIL}}",
+      "optional": true
+    },
+    "farm_structure": {
+      "value": "{{FARM_STRUCTURE}}",
+      "optional": true
+    },
     "fmb_clause": "சர்வே துறையினரால் அளிக்கப்பட்ட வயல் அளவீட்டு வரைபடம் (Field Measurement Book — FMB Sketch) / TSLR நகல் அசலில் கொள்முதலாளரிடம் கொடுக்கப்பட்டுள்ளது. FMB-ல் காட்டப்பட்ட எல்லைகளுக்கு உட்பட்டே இந்த விற்பனை நடைபெறுகிறது.",
     "adangal_clause": "இந்த நிலத்திற்கான அடங்கல் (Adangal), A-Register, மற்றும் கிராம நகலில் (Village Account) விற்பனையாளர் பெயரே காணப்படுகிறது. இந்த கிரயம் பதிவான பின் அனைத்து வருவாய் பதிவேடுகளிலும் (Patta, Chitta, Adangal, A-Register) கொள்முதலாளர் பெயரில் பெயர்மாற்றம் (Mutation) செய்துகொள்ள வேண்டியது."
   },
@@ -135,11 +162,23 @@
     "mother_deed": "{{MOTHER_DEED}}",
     "patta_copy": "{{PATTA_COPY}}",
     "chitta_adangal": "{{CHITTA_ADANGAL}}",
-    "ec_copy": "{{EC_COPY}}",
+    "ec_copy": {
+      "value": "{{EC_COPY}}",
+      "optional": true
+    },
     "fmb_sketch": "{{FMB_SKETCH}}",
-    "tax_receipts": "{{TAX_RECEIPTS}}",
-    "id_copies": "{{ID_COPIES}}",
-    "other_docs": "{{OTHER_DOCS}}"
+    "tax_receipts": {
+      "value": "{{TAX_RECEIPTS}}",
+      "optional": true
+    },
+    "id_copies": {
+      "value": "{{ID_COPIES}}",
+      "optional": true
+    },
+    "other_docs": {
+      "value": "{{OTHER_DOCS}}",
+      "optional": true
+    }
   },
   "section_10_label": "பகுதி 10 — சாட்சிகள் மற்றும் கையொப்பங்கள்",
   "closing_text": "இந்தப்படிக்கு நாம் இருவரும் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் மனப்பூர்வமாய் சம்மதித்து எழுதிக்கொள்ளும் விவசாய நில சுத்த விக்கிரயப் பத்திரம். (This Absolute Sale Deed of Agriculture Land is executed with free will and consent of both parties in the presence of witnesses mentioned below.)",

@@ -1,17 +1,18 @@
 """
 tools/fill_skeleton.py
 ======================
-Tool 5 — fill_skeleton  (STEP 5 of 8)
-
 TWO-PHASE processing:
 
   Phase 1 — fill():              {{PLACEHOLDER}} → value
   Phase 2 — _cleanup_blanks():   blank optional fields → None
                                   blank list entries    → removed
+  Phase 3 — _fix_grammar():      Fix ", ," ", ." trailing punctuation
+                                  after optional field removal
 
-After Phase 2 the skeleton is clean:
+After Phase 3 the skeleton is clean:
   • No "___________" in output
   • No phantom list rows (blank 3rd owner etc.)
+  • No orphan labels or trailing commas/periods
   • generate_docx receives clean, fully resolved data
 """
 
@@ -26,9 +27,10 @@ TOOL_DEFINITION = Tool(
     description=(
         "[CALL 6 of 8] ONE TASK: call this tool only. "
         "Pass skeleton (CALL 2 result) and fields (validate_fields passed dict). "
-        "This tool runs two phases internally: "
+        "This tool runs three phases internally: "
         "Phase 1 — replaces all {{PLACEHOLDER}} tokens with field values. "
         "Phase 2 — cleans up: blank optional fields → None, empty list entries → removed. "
+        "Phase 3 — grammar fix: removes orphan commas/periods after cleanup. "
         "IMPORTANT: store only the 'clean_skeleton' key from the result. "
         "Pass clean_skeleton to generate_docx (CALL 7). "
         "Tell user: 'பத்திர வரைவு தயாரிக்கிறேன்...' "
@@ -56,42 +58,20 @@ TOOL_DEFINITION = Tool(
     outputSchema={
         "type": "object",
         "properties": {
-            "clean_skeleton": {
-                "type": "object",
-                "description": "The fully filled and cleaned skeleton JSON. Pass this — not filled_skeleton — to generate_docx."
-            },
-            "filled_skeleton": {
-                "type": "object",
-                "description": "Alias for clean_skeleton — kept for API backward compatibility."
-            },
-            "fields_applied": {
-                "type": "integer",
-                "description": "Number of {{PLACEHOLDER}} tokens that were successfully replaced with values."
-            },
-            "placeholders_remaining": {
-                "type": "integer",
-                "description": "Number of {{PLACEHOLDER}} tokens still unfilled (should be 0 if can_generate was true)."
-            },
-            "optional_cleaned": {
-                "type": "integer",
-                "description": "Number of blank optional fields removed during Phase 2 cleanup."
-            },
-            "removed_fields": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "List of optional field keys that were blanked and removed."
-            },
-            "message": {
-                "type": "string",
-                "description": "Summary: fields applied, placeholders remaining, optional fields cleaned."
-            },
-            "next_tool": {
-                "type": "string",
-                "const": "generate_docx",
-                "description": "Always call generate_docx next (CALL 7) — pass clean_skeleton."
-            }
+            "clean_skeleton":          {"type": "object"},
+            "filled_skeleton":         {"type": "object"},
+            "fields_applied":          {"type": "integer"},
+            "placeholders_remaining":  {"type": "integer"},
+            "optional_cleaned":        {"type": "integer"},
+            "removed_fields":          {"type": "array", "items": {"type": "string"}},
+            "message":                 {"type": "string"},
+            "next_tool":               {"type": "string", "const": "generate_docx"}
         },
-        "required": ["clean_skeleton", "filled_skeleton", "fields_applied", "placeholders_remaining", "optional_cleaned", "removed_fields", "message", "next_tool"],
+        "required": [
+            "clean_skeleton", "filled_skeleton", "fields_applied",
+            "placeholders_remaining", "optional_cleaned", "removed_fields",
+            "message", "next_tool"
+        ],
         "additionalProperties": False
     },
     annotations={
@@ -128,14 +108,19 @@ def fill(skeleton: dict, fields: dict) -> tuple[dict, int, int]:
             obj = re.sub(r"\{\{[A-Z0-9_]+\}\}", "", obj)
             return obj
         if isinstance(obj, dict):
+            # Unwrap {"value": "...", "optional": true} skeleton markers
+            # If value is blank after fill → return "" so Phase 2 sets it to None
+            if set(obj.keys()) <= {"value", "optional"} and "value" in obj:
+                filled_val = _replace(obj["value"])
+                return filled_val  # "" if blank, actual value if filled
             return {k: _replace(v) for k, v in obj.items()}
         if isinstance(obj, list):
             return [_replace(item) for item in obj]
         return obj
 
-    filled = _replace(copy.deepcopy(skeleton))
-    filled_str     = json.dumps(filled, ensure_ascii=False)
-    remaining      = filled_str.count("{{")
+    filled        = _replace(copy.deepcopy(skeleton))
+    filled_str    = json.dumps(filled, ensure_ascii=False)
+    remaining     = filled_str.count("{{")
     fields_applied = sum(1 for v in normalized.values() if v is not None)
     return filled, fields_applied, remaining
 
@@ -159,9 +144,7 @@ def _cleanup_blanks(filled: dict) -> tuple[dict, list]:
       cleaned_skeleton : dict
       removed_fields   : list[str]   — paths of blanked/removed fields
     """
-    deed_type = filled.get("type", "agriculture")
-    optional  = OPTIONAL_FIELDS.get(deed_type, frozenset())
-    removed   = []
+    removed = []
 
     # Primary identity keys for list-entry removal
     _LIST_PRIMARY_KEYS = ("owner", "name")
@@ -182,7 +165,6 @@ def _cleanup_blanks(filled: dict) -> tuple[dict, list]:
             for i, item in enumerate(obj):
                 item_path = f"{path}[{i}]"
                 if isinstance(item, dict):
-                    # Check if the primary identity key of this entry is blank
                     primary_blank = any(
                         k in item and (not item[k] or str(item[k]).strip() == "")
                         for k in _LIST_PRIMARY_KEYS
@@ -204,6 +186,65 @@ def _cleanup_blanks(filled: dict) -> tuple[dict, list]:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  PHASE 3 — GRAMMAR FIX
+#  After optional fields are removed, fix orphan punctuation in string values
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _fix_grammar(text: str) -> str:
+    """
+    Fix punctuation artifacts left after optional field removal.
+
+    Examples:
+      "நஞ்சை நிலம்,  , 5 தென்னை"   → "நஞ்சை நிலம், 5 தென்னை"
+      "ஆழ்துளை கிணறு, ."            → "ஆழ்துளை கிணறு."
+      ", நஞ்சை நிலம்"               → "நஞ்சை நிலம்"
+      "விவரம்:  "                    → removed by caller (None check)
+    """
+    if not isinstance(text, str):
+        return text
+
+    # Multiple spaces → single space
+    text = re.sub(r"  +", " ", text)
+
+    # Multiple consecutive commas (with optional spaces) → single comma
+    text = re.sub(r"(,\s*){2,}", ", ", text)
+
+    # Comma + optional spaces + period → period
+    text = re.sub(r",\s*\.", ".", text)
+
+    # Semicolon + optional spaces + semicolon → single semicolon
+    text = re.sub(r";\s*;+", ";", text)
+
+    # Comma + optional spaces + semicolon → semicolon
+    text = re.sub(r",\s*;", ";", text)
+
+    # Leading comma/semicolon at start of string
+    text = re.sub(r"^\s*[,;]\s*", "", text)
+
+    # Trailing comma → period
+    text = re.sub(r",\s*$", ".", text)
+
+    # "label: ," or "label: ." at end → strip trailing punct after colon
+    text = re.sub(r"(:\s*)[,;.]+\s*$", r"\1", text)
+
+    # Clean up any " ." double space before period
+    text = re.sub(r"\s+\.", ".", text)
+
+    return text.strip()
+
+
+def _apply_grammar_fix(obj):
+    """Recursively apply _fix_grammar to all string values in the skeleton."""
+    if isinstance(obj, str):
+        return _fix_grammar(obj)
+    if isinstance(obj, dict):
+        return {k: _apply_grammar_fix(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_apply_grammar_fix(item) for item in obj]
+    return obj
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  HANDLER
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -217,15 +258,18 @@ async def handle(arguments: dict) -> list[TextContent]:
     # Phase 2 — cleanup blank optional fields
     clean_skeleton, removed_fields = _cleanup_blanks(filled)
 
+    # Phase 3 — fix grammar artifacts (orphan commas/periods)
+    clean_skeleton = _apply_grammar_fix(clean_skeleton)
+
     return [TextContent(
         type="text",
         text=json.dumps({
-            "filled_skeleton":       clean_skeleton,   # alias kept for API compatibility
-            "clean_skeleton":        clean_skeleton,
-            "fields_applied":        fields_applied,
+            "filled_skeleton":        clean_skeleton,   # alias kept for API compatibility
+            "clean_skeleton":         clean_skeleton,
+            "fields_applied":         fields_applied,
             "placeholders_remaining": remaining,
-            "optional_cleaned":      len(removed_fields),
-            "removed_fields":        removed_fields,
+            "optional_cleaned":       len(removed_fields),
+            "removed_fields":         removed_fields,
             "message": (
                 f"✅ {fields_applied} fields applied. "
                 f"{remaining} placeholders remaining. "

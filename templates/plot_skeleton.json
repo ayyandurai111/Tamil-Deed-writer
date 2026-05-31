@@ -2,93 +2,119 @@
   "type": "plot",
   "title": "சுத்த விக்கிரையப் பத்திரம்",
   "subtitle": "ABSOLUTE SALE DEED — PLOT / VACANT LAND",
-
   "header": {
-    "date_day":   "{{DATE_DAY}}",
+    "date_day": "{{DATE_DAY}}",
     "date_month": "{{DATE_MONTH}}",
-    "date_year":  "{{DATE_YEAR}}"
+    "date_year": "{{DATE_YEAR}}"
   },
-
   "purchaser": {
-    "label":       "கொள்முதலாளர் (PURCHASER / BUYER)",
-    "address":     "{{PURCHASER_ADDRESS}}",
+    "label": "கொள்முதலாளர் (PURCHASER / BUYER)",
+    "address": "{{PURCHASER_ADDRESS}}",
     "father_name": "{{PURCHASER_FATHER}}",
-    "age":         "{{PURCHASER_AGE}}",
-    "name":        "{{PURCHASER_NAME}}",
-    "id_card":     "{{PURCHASER_ID}}",
-    "phone":       "{{PURCHASER_PHONE}}"
+    "age": "{{PURCHASER_AGE}}",
+    "name": "{{PURCHASER_NAME}}",
+    "id_card": "{{PURCHASER_ID}}",
+    "phone": "{{PURCHASER_PHONE}}"
   },
-
   "vendor": {
-    "label":       "விற்பனையாளர் (VENDOR / SELLER)",
-    "address":     "{{VENDOR_ADDRESS}}",
+    "label": "விற்பனையாளர் (VENDOR / SELLER)",
+    "address": "{{VENDOR_ADDRESS}}",
     "father_name": "{{VENDOR_FATHER}}",
-    "age":         "{{VENDOR_AGE}}",
-    "name":        "{{VENDOR_NAME}}",
-    "id_card":     "{{VENDOR_ID}}",
-    "phone":       "{{VENDOR_PHONE}}"
+    "age": "{{VENDOR_AGE}}",
+    "name": "{{VENDOR_NAME}}",
+    "id_card": "{{VENDOR_ID}}",
+    "phone": "{{VENDOR_PHONE}}"
   },
-
   "prior_ownership": {
-    "district":      "{{PROP_DISTRICT}}",
-    "purchase_date": "{{PRIOR_PURCHASE_DATE}}",
-    "reg_office":    "{{PRIOR_REG_OFFICE}}",
-    "doc_no":        "{{PRIOR_DOC_NO}}",
-    "year":          "{{PRIOR_YEAR}}"
+    "district": "{{PROP_DISTRICT}}",
+    "purchase_date": {
+      "value": "{{PRIOR_PURCHASE_DATE}}",
+      "optional": true
+    },
+    "reg_office": {
+      "value": "{{PRIOR_REG_OFFICE}}",
+      "optional": true
+    },
+    "doc_no": {
+      "value": "{{PRIOR_DOC_NO}}",
+      "optional": true
+    },
+    "year": {
+      "value": "{{PRIOR_YEAR}}",
+      "optional": true
+    }
   },
-
   "ownership_clause": "இதன் கீழ் சொத்து விவரத்தில் விவரிக்கப்பட்டுள்ள {{PROP_DISTRICT}} மாவட்டம், {{PROP_AREA}} சொத்தானது நான் எனது சொந்த வருவாய் மற்றும் சேமிப்பைக்கொண்டு {{PRIOR_PURCHASE_DATE}} தேதியிட்ட {{PRIOR_REG_OFFICE}} சார்பதிவக 1 புத்தக ஆவண எண். {{PRIOR_DOC_NO}}/{{PRIOR_YEAR}} மூலம் கிரையம் பெற்று அதுமுதல் எந்தவிதமான வில்லங்கத்திற்கும் உட்படுத்தாமல் சார்க்கார் வரிபாக்கியோ வகையறாக்கள் செலுத்திக்கொண்டு என்னுடய சொந்த அனுபவத்திலும் சுவாதீனத்திலும் சகல சர்வ சுதந்திர பாத்தியங்களுடனும் சகல உரிமைகளுடனும் ஆண்டு அனுபவித்து வருகிறேன்.",
-
   "consideration": {
-    "total_amount":      "{{TOTAL_AMOUNT}}",
-    "amount_in_words":   "{{AMOUNT_WORDS}}",
-    "received_amount":   "{{RECEIVED_AMOUNT}}",
+    "total_amount": "{{TOTAL_AMOUNT}}",
+    "amount_in_words": "{{AMOUNT_WORDS}}",
+    "received_amount": "{{RECEIVED_AMOUNT}}",
     "received_in_words": "{{RECEIVED_WORDS}}",
-    "payment_mode":      "{{PAYMENT_MODE}}"
+    "payment_mode": "{{PAYMENT_MODE}}"
   },
-
   "sale_clause": "கீழே சொத்து விவரத்தில் விவரிக்கப்பட்ட சொத்தை நாளது தேதியில் என்னுடைய குடும்ப செலவிற்க்காகவும் எனது குடும்ப முன்னேற்றத்திற்காகவும் வேண்டி தங்களுக்கு விக்கிரையம் செய்வதாய் முடிவுசெய்து, தாங்களும் கிரையம் பெற பூரண சம்மதம் தெரிவித்து கிரையம் நிச்சயித்த ரூபாய்.{{TOTAL_AMOUNT}}ம் (எழுத்தால் {{AMOUNT_WORDS}} மட்டும்) இந்த ரூபாய்.{{RECEIVED_AMOUNT}}மும் (எழுத்தால் {{RECEIVED_WORDS}} மட்டும்) நான் ஏற்கனவே கீழ்கண்ட சாட்சிகள் முன்னிலையில் தங்களிடமிருந்து ரொக்கமாய் பெற்றுக் கொண்டபடியால், இன்றே கீழே சொத்து விவரத்தில் விவரிக்கப்பட்ட சொத்தை தங்களுக்கு கிரையம் செய்து, சுவாதீனம் ஒப்படைத்து விட்டேன்.",
-
   "possession_clause": "இன்று முதற்கொண்டு தாங்கள் கீழே சொத்து விவரத்தில் விவரிக்கப்பட்ட சொத்தை கைப்பற்றி தங்கள் புத்திர பௌத்திர பாரம்பரியமாய் வித்தொத்தி தானாதி வினுமிய விக்கரையங்களுக்கு யோக்கியமாய் என்றென்றைக்கும் சுத்த கிரைய வாசக சரத்துப்படிக்கு சகல சர்வ சுதந்திர பாத்தியங்களுடனும், சகல உரிமைகளுடனும் ஆண்டு அனுபவித்துக் கொள்ள வேண்டியது.",
-
   "encumbrance_clause": "கீழே சொத்து விவரத்தில் விவரிக்கப்பட்ட சொத்தின் மீது எந்தவிதமான அடமானமோ, பின்தொடரிச்சியோ, சார்க்கார் வரிபாக்கியோ பாக்கியோ, உயில் தாவா, வாரிசு தாவா, மைனர் வழக்கு, கோர்ட்டு அட்டாச்மெண்ட்டு, செக்யூர்ட்டி, கொலட்டிரல், குத்தகை, நில ஆர்ஜிதம், போன்ற எந்தவிதமான வில்லங்கமும் கிடையாது என்று இதன் மூலம் உறுதி கூறுகிறேன். அப்படி பின்னிட்டு கீழ்கண்ட சொத்தில் ஏதேனும் வில்லங்கம் இருப்பதாக தெரியவந்தால் அதை என்னுடைய சொந்த செலவாலும், பொறுப்பாலும், எனது இதர சொத்தாலும், தீர்த்துக் கொடுக்கவும், கிரையம் பொருத்து பிழைத்திருத்தல் ஆவணம் அல்லது வேறு துணை ஆவணங்கள் எழுத தேவையேற்படின் தங்களது செலவில் எழுதிதர சம்மதிக்கிறேன்.",
-
   "tax_clause": "கீழ்கண்ட சொத்திற்கான வரி வகையறாக்களை இன்று தேதிவரையில் பாக்கியில்லாமல் செலுத்திவிட்டேன். அப்படி ஏதேனும் என்னால் கட்ட வேண்டிய நிலுவை (பாக்கி) ஏற்பட்டால் அவற்றை எனது சொந்த செலவில் செலுத்திவிடுகிறேன்.",
-
   "patta_clause": "இன்று முதற்கொண்டு சொத்திற்கான பட்டாவை தங்கள் பெயருக்கு பெயர் மாற்றம் செய்துக்கொண்டு சார்க்கார் வரி வகையாறாக்களை தங்கள் பெயரில் செலுத்தி வரவேண்டியது.",
-
-  "handed_doc_no": "{{HANDED_DOC_NO}}",
+  "handed_doc_no": {
+    "value": "{{HANDED_DOC_NO}}",
+    "optional": true
+  },
   "document_clause": "இந்த சொத்துக்கு ஆதரவாக என்னுடைய பெயரால் கிரையம் பெற்ற {{HANDED_DOC_NO}} நெம்பர் கிரையப் பத்திரம் மற்றும் இதர பதிவுருக்களை அசலில் தங்கள் வசம் கொடுத்துள்ளேன்.",
-
   "relinquish_clause": "தங்களுக்கு கிரையம் செய்யும் கீழே சொத்து விவரத்தில் விவரிக்கப்பட்ட சொத்தின் மீது இனிமேல் எனக்கோ, எனது பின்னிட்டு வரும் வாரிசுகளுக்கோ, எந்தவிதமான உரிமை, அக்கு பாத்தியம், பின்தொடர்ச்சி ஏதும் கிடையாது என்று இதன் மூலம் உறுதி கூறுகிறேன்.",
-
   "closing_text": "இந்தப்படிக்கு நாம் இருவரும் அடியிற்கண்ட சாட்சிகள் முன்னிலையில் மனப்பூர்வமாய் சம்மதித்து எழுதிக் கொள்ளும் சுத்த விக்கிரையப் பத்திரம்.",
-
   "property_label": "சொத்து விவரம்",
   "property": {
-    "door_no":        "{{DOOR_NO}}",
-    "ward_no":        "{{WARD_NO}}",
-    "plot_no":        "{{PLOT_NO}}",
-    "street":         "{{STREET}}",
-    "area":           "{{PROP_AREA}}",
-    "taluk":          "{{TALUK}}",
-    "district":       "{{PROP_DISTRICT}}",
-    "extent_sqft":    "{{EXTENT_SQFT}}",
-    "boundary_east":  "{{BOUNDARY_EAST}}",
-    "boundary_west":  "{{BOUNDARY_WEST}}",
-    "boundary_north": "{{BOUNDARY_NORTH}}",
-    "boundary_south": "{{BOUNDARY_SOUTH}}"
+    "door_no": {
+      "value": "{{DOOR_NO}}",
+      "optional": true
+    },
+    "ward_no": {
+      "value": "{{WARD_NO}}",
+      "optional": true
+    },
+    "plot_no": {
+      "value": "{{PLOT_NO}}",
+      "optional": true
+    },
+    "street": {
+      "value": "{{STREET}}",
+      "optional": true
+    },
+    "area": "{{PROP_AREA}}",
+    "taluk": {
+      "value": "{{TALUK}}",
+      "optional": true
+    },
+    "district": "{{PROP_DISTRICT}}",
+    "extent_sqft": "{{EXTENT_SQFT}}",
+    "boundary_east": {
+      "value": "{{BOUNDARY_EAST}}",
+      "optional": true
+    },
+    "boundary_west": {
+      "value": "{{BOUNDARY_WEST}}",
+      "optional": true
+    },
+    "boundary_north": {
+      "value": "{{BOUNDARY_NORTH}}",
+      "optional": true
+    },
+    "boundary_south": {
+      "value": "{{BOUNDARY_SOUTH}}",
+      "optional": true
+    }
   },
-
   "witnesses": [
     {
-      "label":   "சாட்சி 1 (Witness 1)",
-      "name":    "{{WITNESS1_NAME}}",
+      "label": "சாட்சி 1 (Witness 1)",
+      "name": "{{WITNESS1_NAME}}",
       "address": "{{WITNESS1_ADDRESS}}"
     },
     {
-      "label":   "சாட்சி 2 (Witness 2)",
-      "name":    "{{WITNESS2_NAME}}",
+      "label": "சாட்சி 2 (Witness 2)",
+      "name": "{{WITNESS2_NAME}}",
       "address": "{{WITNESS2_ADDRESS}}"
     }
   ]
